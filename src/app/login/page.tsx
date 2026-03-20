@@ -14,10 +14,32 @@ export default function LoginPage() {
     e.preventDefault();
     setIsLoading(true);
     
-    // Simulate auth for now, later we'll add real API call
-    setTimeout(() => {
-      router.push("/dashboard");
-    }, 800);
+    try {
+      const base = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+      const formData = new URLSearchParams();
+      formData.append("username", username);
+      formData.append("password", password);
+
+      const res = await fetch(`${base}/api/login/token`, {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: formData.toString()
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        localStorage.setItem("token", data.access_token);
+        
+        router.push("/dashboard");
+      } else {
+         const errorData = await res.json();
+         alert(errorData.detail || "Authentication Failed. Invalid Credentials.");
+      }
+    } catch (err) {
+      alert("Terminal Network Error. Ensure backend is running.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
