@@ -32,6 +32,7 @@ const getApiUrl = (path: string) => {
 interface Reseller {
   id: string;
   username: string;
+  email?: string;
   role: string;
   credits: string;
 }
@@ -41,11 +42,13 @@ export default function ResellersPage() {
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newUsername, setNewUsername] = useState("");
+  const [newEmail, setNewEmail] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [newCredits, setNewCredits] = useState("0");
   const [isCreating, setIsCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [selectedProject, setSelectedProject] = useState("All Products");
 
   useEffect(() => {
     fetchResellers();
@@ -140,11 +143,20 @@ export default function ResellersPage() {
           
           <button 
             onClick={() => setIsModalOpen(true)}
-            className="flex items-center gap-3 px-8 py-4 bg-indigo-600 text-white font-black rounded-2xl hover:bg-indigo-500 transition-all shadow-[0_20px_40px_-10px_rgba(79,70,229,0.3)] group uppercase italic tracking-widest text-sm"
+            className="flex items-center gap-3 px-8 py-4 bg-primary text-white font-black rounded-2xl hover:bg-primary/90 transition-all shadow-[0_20px_40px_-10px_rgba(139,92,246,0.3)] group uppercase tracking-widest text-[9px]"
           >
             <Plus className="w-5 h-5 group-hover:rotate-90 transition-transform" />
-            Establish Merchant
+            Add Reseller
           </button>
+        </div>
+
+        {/* Project Selector */}
+        <div className="bg-zinc-950/50 border border-zinc-900 rounded-2xl p-4 flex items-center gap-4">
+          <span className="text-[9px] text-zinc-500 font-bold uppercase tracking-widest">Select Project</span>
+          <select value={selectedProject} onChange={(e) => setSelectedProject(e.target.value)}
+            className="bg-zinc-900/50 border border-zinc-800 rounded-xl px-3 py-2 text-[10px] font-bold text-white outline-none appearance-none cursor-pointer">
+            <option>All Products</option>
+          </select>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -225,15 +237,20 @@ export default function ResellersPage() {
                                  const amt = prompt("Enter new credit amount:", merchant.credits);
                                  if (amt !== null) handleUpdateCredits(merchant.id, amt);
                                }}
-                               className="px-4 py-2 bg-zinc-900 border border-zinc-800 rounded-xl text-[10px] font-black uppercase tracking-widest text-zinc-400 hover:text-white hover:border-indigo-500 transition-all"
+                               className="px-3 py-1.5 bg-primary/10 text-primary rounded-lg text-[8px] font-black uppercase hover:bg-primary/20 transition-all"
                              >
-                               Adjust Credits
+                               Edit
+                             </button>
+                             <button 
+                               className="px-3 py-1.5 bg-blue-500/10 text-blue-400 rounded-lg text-[8px] font-black uppercase hover:bg-blue-500/20 transition-all"
+                             >
+                               View Keys
                              </button>
                              <button 
                                onClick={() => handleDelete(merchant.id)}
-                               className="p-2.5 bg-zinc-900/50 border border-zinc-900 text-zinc-700 hover:text-red-500 hover:border-red-500/30 transition-all rounded-xl"
+                               className="px-3 py-1.5 bg-red-500/10 text-red-400 rounded-lg text-[8px] font-black uppercase hover:bg-red-500/20 transition-all"
                              >
-                                <Trash2 className="w-4 h-4" />
+                                Delete
                              </button>
                          </div>
                       </td>
@@ -288,7 +305,11 @@ export default function ResellersPage() {
                   <input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="w-full bg-zinc-950 border border-zinc-900 rounded-2xl px-6 py-4 text-xs font-bold text-white" required />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-[9px] font-black text-white uppercase tracking-[0.4em] ml-2">Initial Credits</label>
+                  <label className="text-[9px] font-black text-white uppercase tracking-[0.4em] ml-2">Email</label>
+                  <input type="email" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} placeholder="reseller@example.com" className="w-full bg-zinc-950 border border-zinc-900 rounded-2xl px-6 py-4 text-xs font-bold text-white" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[9px] font-black text-white uppercase tracking-[0.4em] ml-2">Initial Balance</label>
                   <input type="number" value={newCredits} onChange={(e) => setNewCredits(e.target.value)} className="w-full bg-zinc-950 border border-zinc-900 rounded-2xl px-6 py-4 text-xs font-bold text-white" required />
                 </div>
                 <button disabled={isCreating} className="w-full py-5 bg-indigo-600 text-white font-black rounded-2xl uppercase tracking-widest italic text-sm shadow-[0_20px_40px_-10px_rgba(79,70,229,0.3)] hover:bg-indigo-500 transition-all">

@@ -36,6 +36,8 @@ interface Product {
   version: string;
   stock_limit: string;
   auto_generate: boolean;
+  active_licenses?: number;
+  last_log?: string;
 }
 
 export default function ProductsPage() {
@@ -205,17 +207,21 @@ export default function ProductsPage() {
                         {product.description || "Core security module protecting application memory."}
                     </p>
 
-                    <div className="grid grid-cols-2 gap-4 mt-auto">
+                    <div className="grid grid-cols-3 gap-3 mt-auto">
                         <div className="p-4 bg-zinc-900/30 border border-zinc-900 rounded-2xl">
-                             <p className="text-[8px] font-black text-zinc-700 uppercase tracking-widest mb-1">Price Tag</p>
+                             <p className="text-[8px] font-black text-zinc-700 uppercase tracking-widest mb-1">Price</p>
                              <div className="flex items-center gap-1">
                                 <DollarSign className="w-3 h-3 text-indigo-500" />
                                 <span className="text-sm font-black text-white italic">{product.price}</span>
                              </div>
                         </div>
                         <div className="p-4 bg-zinc-900/30 border border-zinc-900 rounded-2xl">
-                             <p className="text-[8px] font-black text-zinc-700 uppercase tracking-widest mb-1">Unit ID</p>
-                             <p className="text-[10px] font-mono font-bold text-zinc-500 truncate">{product.id.split('-')[0]}</p>
+                             <p className="text-[8px] font-black text-zinc-700 uppercase tracking-widest mb-1">Active Licenses</p>
+                             <p className="text-sm font-black text-emerald-500 italic">{product.active_licenses ?? 0}</p>
+                        </div>
+                        <div className="p-4 bg-zinc-900/30 border border-zinc-900 rounded-2xl">
+                             <p className="text-[8px] font-black text-zinc-700 uppercase tracking-widest mb-1">Last Log</p>
+                             <p className="text-[9px] font-mono font-bold text-zinc-500 truncate">{product.last_log ? new Date(product.last_log).toLocaleDateString() : "None"}</p>
                         </div>
                     </div>
 
