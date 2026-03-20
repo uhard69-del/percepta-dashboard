@@ -44,6 +44,7 @@ const mockChartData = [
 export default function DashboardPage() {
   const [stats, setStats] = useState({ users: 0, licenses: 0, products: 0, active: 0, banned: 0 });
   const [logs, setLogs] = useState<Log[]>([]);
+  const [chartData, setChartData] = useState<{name: string, value: number}[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -67,7 +68,24 @@ export default function DashboardPage() {
             active: licenses.filter((l: any) => l.status === "active").length,
             banned: licenses.filter((l: any) => l.status === "banned").length
           });
-          setLogs(logsData.slice(0, 10)); // Top 10 latest
+          setLogs(logsData.slice(0, 10));
+
+          // Calculate daily growth (Last 7 days)
+          const days: Record<string, number> = {};
+          const now = new Date();
+          for (let i = 6; i >= 0; i--) {
+            const d = new Date(now);
+            d.setDate(d.getDate() - i);
+            const dateStr = d.toLocaleDateString('en-US', { day: '2-digit', month: 'short' });
+            days[dateStr] = 0;
+          }
+
+          licenses.forEach((l: any) => {
+            const dateStr = new Date(l.created_at).toLocaleDateString('en-US', { day: '2-digit', month: 'short' });
+            if (days[dateStr] !== undefined) days[dateStr]++;
+          });
+
+          setChartData(Object.entries(days).map(([name, value]) => ({ name, value: value as number })));
         }
       } catch (error) {
         console.error("Fetch failure:", error);
@@ -131,7 +149,7 @@ export default function DashboardPage() {
                 </div>
                 <div className="h-[200px] w-full">
                     <ResponsiveContainer width="100%" height="100%">
-                        <AreaChart data={mockChartData}>
+                        <AreaChart data={chartData}>
                             <defs>
                                 <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
                                     <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3}/>

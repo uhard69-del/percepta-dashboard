@@ -64,6 +64,21 @@ export default function ApplicationPage() {
         enabled: true, 
         icon: CloudRain 
     },
+    {
+        id: "hw_id_lock",
+        name: "Strict HWID Lock",
+        description: "Enforce 1-to-1 hardware mapping. Prevents account sharing and unauthorized multi-box usage.",
+        enabled: true,
+        icon: Lock
+    },
+    {
+        id: "kernel_sec",
+        name: "Kernel-level Protection",
+        description: "Deploy ring-0 memory obfuscation to neutralize advanced dumping tools.",
+        enabled: false,
+        icon: ShieldCheck,
+        danger: true
+    },
     { 
         id: "dev_mode", 
         name: "Developer Override Mode", 

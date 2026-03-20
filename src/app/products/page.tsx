@@ -31,8 +31,11 @@ interface Product {
   name: string;
   description: string;
   price: string;
+  category: string;
   is_enabled: boolean;
   version: string;
+  stock_limit: string;
+  auto_generate: boolean;
 }
 
 export default function ProductsPage() {
@@ -46,8 +49,11 @@ export default function ProductsPage() {
   // Form State
   const [newProductName, setNewProductName] = useState("");
   const [newProductDesc, setNewProductDesc] = useState("");
-  const [newProductPrice, setNewProductPrice] = useState("0.00");
+  const [newProductPrice, setNewProductPrice] = useState("49.99");
   const [newProductVer, setNewProductVer] = useState("1.0.0");
+  const [newProductCat, setNewProductCat] = useState("Misc");
+  const [newProductStock, setNewProductStock] = useState("10");
+  const [newProductAuto, setNewProductAuto] = useState(false);
 
   const fetchProducts = async () => {
     setLoading(true);
@@ -81,7 +87,10 @@ export default function ProductsPage() {
           name: newProductName, 
           description: newProductDesc,
           price: newProductPrice,
+          category: newProductCat,
           version: newProductVer,
+          stock_limit: newProductStock,
+          auto_generate: newProductAuto,
           is_enabled: true
         }),
       });
@@ -100,6 +109,19 @@ export default function ProductsPage() {
       setError("Network failure. Verify cloud relay status.");
     } finally {
       setIsCreating(false);
+    }
+  };
+
+  const handleRefillStock = async (name: string) => {
+    try {
+      const res = await fetch(getApiUrl(`/api/products/admin/products/${name}/refill?count=10`), {
+        method: "POST"
+      });
+      if (res.ok) {
+        fetchProducts();
+      }
+    } catch (err) {
+      console.error("Refill failed", err);
     }
   };
 
@@ -153,6 +175,10 @@ export default function ProductsPage() {
 
                 <div className="p-8 pt-10 flex-1 flex flex-col">
                     <div className="mb-6">
+                        <div className="flex items-center gap-2 mb-2">
+                             <span className="px-2 py-0.5 bg-indigo-500/10 border border-indigo-500/20 rounded text-[7px] font-black text-indigo-500 uppercase tracking-widest">{product.category}</span>
+                             <span className="px-2 py-0.5 bg-zinc-900 border border-zinc-800 rounded text-[7px] font-black text-zinc-600 uppercase tracking-widest">v{product.version}</span>
+                        </div>
                         <h3 className="text-2xl font-black text-white uppercase italic tracking-tighter group-hover:text-indigo-400 transition-colors">
                             {product.name}
                         </h3>
@@ -166,8 +192,12 @@ export default function ProductsPage() {
                                     {product.is_enabled ? "Active" : "Disabled"}
                                 </span>
                              </div>
-                             <span className="text-[9px] font-black text-zinc-800 uppercase">|</span>
-                             <span className="text-[9px] font-black text-indigo-500 uppercase italic">v{product.version}</span>
+                             {product.auto_generate && (
+                                <>
+                                    <span className="text-[9px] font-black text-zinc-800 uppercase">|</span>
+                                    <span className="text-[9px] font-black text-orange-500 uppercase italic">Auto-Gen Enabled</span>
+                                </>
+                             )}
                         </div>
                     </div>
 
@@ -190,10 +220,22 @@ export default function ProductsPage() {
                     </div>
 
                     <div className="mt-6 pt-6 border-t border-zinc-900 flex items-center justify-between">
-                         <span className="text-[9px] font-black text-zinc-800 uppercase tracking-tighter">Last key issue: 3m ago</span>
-                         <button className="flex items-center gap-2 text-[10px] font-black text-zinc-500 hover:text-white uppercase italic tracking-widest transition-colors">
-                            Manage <ChevronRight className="w-3 h-3" />
-                         </button>
+                         <div className="flex flex-col">
+                            <span className="text-[8px] font-black text-zinc-700 uppercase tracking-widest mb-1">Stock Pool</span>
+                            <span className="text-xs font-black text-white italic">{product.stock_limit} units</span>
+                         </div>
+                         <div className="flex gap-2">
+                             <button 
+                                onClick={() => handleRefillStock(product.name)}
+                                className="p-2.5 bg-zinc-900 border border-zinc-800 rounded-xl text-zinc-500 hover:text-indigo-500 hover:border-indigo-500/30 transition-all group/refill"
+                                title="Refill Stock"
+                             >
+                                <RefreshCw className="w-4 h-4 group-hover/refill:rotate-180 transition-transform duration-500" />
+                             </button>
+                             <button className="flex items-center gap-2 px-4 py-2 bg-zinc-900 border border-zinc-800 rounded-xl text-[9px] font-black text-zinc-500 hover:text-white uppercase italic tracking-widest transition-all">
+                                Edit <ChevronRight className="w-3 h-3" />
+                             </button>
+                         </div>
                     </div>
                 </div>
               </div>
@@ -256,6 +298,42 @@ export default function ProductsPage() {
                         <DollarSign className="absolute left-6 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-600" />
                         <input type="text" value={newProductPrice} onChange={(e) => setNewProductPrice(e.target.value)} className="w-full bg-zinc-950 border border-zinc-900 rounded-2xl px-14 py-4 text-xs font-bold text-indigo-500 uppercase tracking-widest focus:border-indigo-500/50 outline-none transition-all" required />
                     </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                        <label className="text-[9px] font-black text-zinc-500 uppercase tracking-[0.4em] ml-2">Category</label>
+                        <select value={newProductCat} onChange={(e) => setNewProductCat(e.target.value)} className="w-full bg-zinc-950 border border-zinc-900 rounded-2xl px-6 py-4 text-xs font-bold text-white uppercase tracking-widest focus:border-indigo-500/50 outline-none transition-all appearance-none cursor-pointer">
+                            <option value="Aimbot">Aimbot</option>
+                            <option value="ESP">ESP</option>
+                            <option value="Misc">Misc</option>
+                            <option value="Bundles">Bundles</option>
+                        </select>
+                    </div>
+                    <div className="space-y-2">
+                        <label className="text-[9px] font-black text-zinc-500 uppercase tracking-[0.4em] ml-2">Stock Limit</label>
+                        <input type="number" value={newProductStock} onChange={(e) => setNewProductStock(e.target.value)} className="w-full bg-zinc-950 border border-zinc-900 rounded-2xl px-6 py-4 text-xs font-bold text-white uppercase tracking-widest focus:border-indigo-500/50 outline-none transition-all" />
+                    </div>
+                </div>
+
+                <div className="flex items-center justify-between p-4 bg-zinc-950 border border-zinc-900 rounded-2xl">
+                    <div className="flex flex-col">
+                        <span className="text-[9px] font-black text-white uppercase tracking-widest">Auto-Generate</span>
+                        <span className="text-[7px] font-bold text-zinc-500 uppercase tracking-widest">Create keys on-demand</span>
+                    </div>
+                    <button 
+                        type="button"
+                        onClick={() => setNewProductAuto(!newProductAuto)}
+                        className={cn(
+                            "w-12 h-6 rounded-full transition-all relative",
+                            newProductAuto ? "bg-indigo-600" : "bg-zinc-800"
+                        )}
+                    >
+                        <div className={cn(
+                            "absolute top-1 w-4 h-4 bg-white rounded-full transition-all",
+                            newProductAuto ? "right-1" : "left-1"
+                        )} />
+                    </button>
                 </div>
 
                 <div className="space-y-2">

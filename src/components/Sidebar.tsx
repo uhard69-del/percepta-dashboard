@@ -19,7 +19,7 @@ const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { name: "Generated Keys", href: "/licenses", icon: Key },
   { name: "Customer Hub", href: "/customers", icon: Users },
-  { name: "License Management", href: "/products", icon: Package },
+  { name: "Product Hub", href: "/products", icon: Package },
   { name: "Reseller Management", href: "/resellers", icon: Activity },
   { name: "Integrate Hub", href: "/integrate", icon: Terminal },
   { name: "Activity Logs", href: "/logs", icon: Activity },
