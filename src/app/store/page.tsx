@@ -64,8 +64,8 @@ export default function StorePage() {
       <nav className="h-24 border-b border-zinc-900/50 bg-black/40 backdrop-blur-xl sticky top-0 z-50">
         <div className="max-w-[1400px] mx-auto h-full px-8 flex items-center justify-between">
           <div className="flex items-center gap-3">
-             <div className="p-2.5 rounded-2xl bg-zinc-950 border border-zinc-900 shadow-2xl">
-                <ShieldCheck className="w-6 h-6 text-indigo-500 drop-shadow-[0_0_10px_rgba(99,102,241,0.5)]" />
+             <div className="p-1 rounded-2xl bg-zinc-950 border border-zinc-900 shadow-2xl flex items-center justify-center">
+                <img src="/logo.png" className="w-8 h-8 object-contain drop-shadow-[0_0_10px_rgba(99,102,241,0.5)]" alt="PerceptaAI Logo" />
              </div>
              <span className="text-xl font-black tracking-tighter uppercase italic">
                 Percepta<span className="text-indigo-500 italic">AI</span>
@@ -98,8 +98,8 @@ export default function StorePage() {
                 <span className="text-[8px] font-black text-indigo-500 uppercase tracking-[0.3em]">Next-Gen Intelligence</span>
             </div>
             <h1 className="text-6xl md:text-8xl font-black tracking-tighter uppercase italic leading-[0.9]">
-                Enterprise <br />
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-500 animate-gradient">Marketplace</span>
+                Percepta <br />
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-500 animate-gradient">Network</span>
             </h1>
             <p className="max-w-2xl mx-auto text-zinc-500 text-sm font-bold uppercase tracking-widest italic opacity-60">
                 Deploy advanced security nodes and automated aim-protocols <br />
