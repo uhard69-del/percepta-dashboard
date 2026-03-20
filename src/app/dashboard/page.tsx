@@ -12,12 +12,7 @@ import { cn } from "@/lib/utils";
 import { XAxis, YAxis, Tooltip, ResponsiveContainer, AreaChart, Area, BarChart, Bar } from "recharts";
 import { RadarGlobe } from "@/components/RadarGlobe";
 
-const getApiUrl = (path: string) => {
-  const base = process.env.NEXT_PUBLIC_API_URL || "https://percepta-backend.onrender.com";
-  const nb = base.endsWith("/") ? base.slice(0, -1) : base;
-  const np = path.startsWith("/") ? path : `/${path}`;
-  return `${nb}${np}`;
-};
+import { getApiUrl } from "@/lib/api";
 
 interface Log { id: string; message: string; timestamp: string; ip?: string; }
 

@@ -16,18 +16,7 @@ import {
   MoreVertical
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-// Robust API helper
-const getApiUrl = (path: string) => {
-  const base = process.env.NEXT_PUBLIC_API_URL || "https://percepta-backend.onrender.com";
-  const normalizedBase = base.endsWith("/") ? base.slice(0, -1) : base;
-  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
-  
-  if (normalizedBase.endsWith("/api") && normalizedPath.startsWith("/api/")) {
-    return `${normalizedBase}${normalizedPath.substring(4)}`;
-  }
-  return `${normalizedBase}${normalizedPath}`;
-};
+import { getApiUrl } from "@/lib/api";
 
 interface Reseller {
   id: string;

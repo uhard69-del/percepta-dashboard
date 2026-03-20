@@ -9,13 +9,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const getApiUrl = (path: string) => {
-  const base = process.env.NEXT_PUBLIC_API_URL || "https://percepta-backend.onrender.com";
-  const nb = base.endsWith("/") ? base.slice(0, -1) : base;
-  const np = path.startsWith("/") ? path : `/${path}`;
-  if (nb.endsWith("/api") && np.startsWith("/api/")) return `${nb}${np.substring(4)}`;
-  return `${nb}${np}`;
-};
+import { getApiUrl } from "@/lib/api";
 
 interface License {
   id: string;

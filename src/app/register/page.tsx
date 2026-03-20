@@ -15,6 +15,7 @@ import {
   RefreshCw
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { getApiUrl } from "@/lib/api";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -34,8 +35,7 @@ export default function RegisterPage() {
     setError("");
 
     try {
-      const base = process.env.NEXT_PUBLIC_API_URL || "https://percepta-backend.onrender.com";
-      const res = await fetch(`${base}/api/register`, {
+      const res = await fetch(getApiUrl("/api/register"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData)

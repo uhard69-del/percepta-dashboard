@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { ShieldCheck, Lock, User, ArrowRight } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { getApiUrl } from "@/lib/api";
 
 export default function LoginPage() {
   const [username, setUsername] = useState("");
@@ -15,12 +16,11 @@ export default function LoginPage() {
     setIsLoading(true);
     
     try {
-      const base = process.env.NEXT_PUBLIC_API_URL || "https://percepta-backend.onrender.com";
       const formData = new URLSearchParams();
       formData.append("username", username);
       formData.append("password", password);
 
-      const res = await fetch(`${base}/api/login/token`, {
+      const res = await fetch(getApiUrl("/api/login/token"), {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body: formData.toString()

@@ -14,6 +14,7 @@ import {
   Users
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { getApiUrl } from "@/lib/api";
 
 interface Product {
   id: string;
@@ -36,8 +37,7 @@ export default function StorePage() {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const base = process.env.NEXT_PUBLIC_API_URL || "https://percepta-backend.onrender.com";
-        const res = await fetch(`${base}/api/products/public/list`);
+        const res = await fetch(getApiUrl("/api/products/public/list"));
         if (res.ok) {
           const data = await res.json();
           setProducts(data);
