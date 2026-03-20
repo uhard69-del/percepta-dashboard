@@ -13,7 +13,8 @@ import {
   Globe,
   Cpu,
   Shield,
-  Zap
+  Zap,
+  RefreshCw
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 

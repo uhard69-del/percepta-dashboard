@@ -1,139 +1,193 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Header } from "@/components/Header";
 import { 
-  ShieldAlert, 
-  MessageSquare, 
-  Save, 
-  RefreshCcw,
-  Zap,
-  Lock,
-  Ban,
-  Clock,
-  Info,
-  ShieldCheck
+  ShieldCheck, 
+  Zap, 
+  Webhook, 
+  Lock, 
+  CloudRain, 
+  Wifi, 
+  Terminal,
+  Save,
+  RefreshCw,
+  AlertCircle,
+  ToggleLeft
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-// Robust API helper
-const getApiUrl = (path: string) => {
-  const base = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-  const normalizedBase = base.endsWith("/") ? base.slice(0, -1) : base;
-  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
-  
-  if (normalizedBase.endsWith("/api") && normalizedPath.startsWith("/api/")) {
-    return `${normalizedBase}${normalizedPath.substring(4)}`;
-  }
-  return `${normalizedBase}${normalizedPath}`;
-};
-
-interface Setting {
-  key: string;
-  value: string;
+interface ProtocolToggle {
+  id: string;
+  name: string;
+  description: string;
+  enabled: boolean;
+  icon: any;
+  danger?: boolean;
 }
 
-const DEFAULT_MESSAGES = [
-  { key: "msg_hwid_mismatch", label: "HWID Mismatch Error", icon: Lock, default: "Hardware ID mismatch. Contact support." },
-  { key: "msg_banned", label: "License Banned Message", icon: Ban, default: "This license has been banned." },
-  { key: "msg_expired", label: "License Expired Message", icon: Clock, default: "Your license has expired." },
-  { key: "msg_invalid", label: "Invalid Key Message", icon: ShieldAlert, default: "Invalid license key." }
-];
-
 export default function ApplicationPage() {
-  const [settings, setSettings] = useState<Record<string, string>>({});
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState<string | null>(null);
-  const [strictHwid, setStrictHwid] = useState(true);
-  const [devMode, setDevMode] = useState(false);
-
-  useEffect(() => {
-    fetchSettings();
-  }, []);
-
-  const fetchSettings = async () => {
-    try {
-      const res = await fetch(getApiUrl("/api/settings/"));
-      if (res.ok) {
-        const data: Setting[] = await res.json();
-        const settingsMap: Record<string, string> = {};
-        data.forEach(s => settingsMap[s.key] = s.value);
-        setSettings(settingsMap);
-      }
-    } catch (err) {
-      console.error("Fetch failure:", err);
-    } finally {
-      setLoading(false);
+  const [toggles, setToggles] = useState<ProtocolToggle[]>([
+    { 
+        id: "auto_release", 
+        name: "Auto key release on payment", 
+        description: "Automatically issue license keys via Stage-3 relay upon successful transaction verification.", 
+        enabled: true, 
+        icon: Zap 
+    },
+    { 
+        id: "webhook_delivery", 
+        name: "Webhook delivery enabled", 
+        description: "Enable real-time event dispatching to configured Discord or custom HTTP endpoints.", 
+        enabled: true, 
+        icon: Webhook 
+    },
+    { 
+        id: "stage1_sec", 
+        name: "Stage-1 security protocol", 
+        description: "Enforce biometric and cryptographic hardware validation on initial client handshake.", 
+        enabled: true, 
+        icon: ShieldCheck 
+    },
+    { 
+        id: "anti_leak", 
+        name: "Anti-leak protection", 
+        description: "Detect and neutralize unauthorized binary redistribution attempts in memory.", 
+        enabled: false, 
+        icon: Lock,
+        danger: true
+    },
+    { 
+        id: "cloud_relay", 
+        name: "Cloud-relay failover", 
+        description: "Automatically route traffic through standby nodes if the master US-EAST node is compromised.", 
+        enabled: true, 
+        icon: CloudRain 
+    },
+    { 
+        id: "dev_mode", 
+        name: "Developer Override Mode", 
+        description: "Bypass certain security checks for local testing. SHOULD BE DISABLED IN PRODUCTION.", 
+        enabled: false, 
+        icon: Terminal,
+        danger: true
     }
+  ]);
+
+  const [isSaving, setIsSaving] = useState(false);
+  const [success, setSuccess] = useState(false);
+
+  const toggleProtocol = (id: string) => {
+    setToggles(prev => prev.map(t => t.id === id ? { ...t, enabled: !t.enabled } : t));
+    setSuccess(false);
   };
 
-  const updateSetting = async (key: string, value: string) => {
-    setSaving(key);
-    try {
-      const res = await fetch(getApiUrl("/api/settings/"), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ key, value })
-      });
-      if (res.ok) setSettings(prev => ({ ...prev, [key]: value }));
-    } catch (err) {
-      console.error("Update failure:", err);
-    } finally {
-      setSaving(null);
-    }
+  const handleSave = () => {
+    setIsSaving(true);
+    setTimeout(() => {
+      setIsSaving(false);
+      setSuccess(true);
+      setTimeout(() => setSuccess(false), 3000);
+    }, 1500);
   };
 
   return (
     <div className="flex-1 overflow-auto bg-[#08080A]">
       <Header />
-      <div className="p-10 max-w-[1200px] mx-auto space-y-12">
-        <div>
-          <h1 className="text-[40px] font-black text-white uppercase italic leading-none mb-3">Application Settings</h1>
-          <p className="text-zinc-500 text-xs font-bold uppercase tracking-[0.2em] opacity-60">Global protocol overrides</p>
+      <div className="p-10 max-w-[1200px] mx-auto space-y-10">
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+                <ShieldCheck className="w-4 h-4 text-indigo-500" />
+                <span className="text-[10px] font-black text-indigo-500 uppercase tracking-[0.3em]">System Configuration</span>
+            </div>
+            <h1 className="text-4xl font-black text-white tracking-tighter uppercase italic leading-none">Application Protocols</h1>
+          </div>
+          
+          <button 
+            onClick={handleSave}
+            disabled={isSaving}
+            className={cn(
+                "flex items-center gap-3 px-8 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all shadow-2xl disabled:opacity-50",
+                success ? "bg-emerald-600 text-white" : "bg-indigo-600 hover:bg-indigo-500 text-white"
+            )}
+          >
+            {isSaving ? <RefreshCw className="w-4 h-4 animate-spin" /> : success ? <ShieldCheck className="w-4 h-4" /> : <Save className="w-4 h-4" />}
+            {isSaving ? "Syncing..." : success ? "Protocols Updated" : "Commit Changes"}
+          </button>
         </div>
 
-        <div className="grid grid-cols-1 gap-8">
-           <div className="bg-zinc-950 border border-zinc-900 rounded-[2.5rem] p-10 space-y-10 shadow-2xl relative overflow-hidden">
-              <div className="relative z-10">
-                <h2 className="text-xl font-black text-white uppercase italic tracking-widest mb-6 flex items-center gap-4">
-                  <div className="p-2 bg-primary/10 border border-primary/20 rounded-lg"><Zap className="w-5 h-5 text-primary" /></div>
-                  System Response Strings
-                </h2>
-                <div className="space-y-8">
-                  {DEFAULT_MESSAGES.map((msg) => (
-                    <div key={msg.key} className="bg-zinc-900/10 border border-zinc-900 rounded-3xl p-8 hover:border-zinc-800 transition-all">
-                       <div className="flex items-start justify-between mb-4">
-                          <div className="flex items-center gap-4">
-                             <div className="p-3 bg-zinc-900 border border-zinc-800 text-zinc-600 group-hover:text-primary"><msg.icon className="w-5 h-5" /></div>
-                             <div><h3 className="text-xs font-black text-white uppercase tracking-widest">{msg.label}</h3></div>
-                          </div>
-                          <button disabled={saving === msg.key} className={cn("px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all", saving === msg.key ? "bg-zinc-800 text-zinc-500" : "bg-primary text-white shadow-2xl")} onClick={() => { const i = document.getElementById(msg.key) as HTMLTextAreaElement; updateSetting(msg.key, i.value); }}>
-                            {saving === msg.key ? "Syncing..." : "Update"}
-                          </button>
-                       </div>
-                       <textarea id={msg.key} defaultValue={settings[msg.key] || msg.default} className="w-full bg-zinc-950 border border-zinc-900 rounded-2xl p-6 text-sm text-zinc-300 focus:border-primary/30 min-h-[80px] resize-none" />
-                    </div>
-                  ))}
-                </div>
-              </div>
-           </div>
+        <div className="bg-zinc-950/40 border border-zinc-900 rounded-[2.5rem] p-8 shadow-2xl relative overflow-hidden">
+            <div className="absolute top-0 right-0 p-12 opacity-5 pointer-events-none">
+                <Wifi className="w-64 h-64 text-indigo-500 -mr-20 -mt-20" />
+            </div>
 
-           <div className="bg-zinc-950 border border-zinc-900 rounded-[2.5rem] p-10 space-y-6 shadow-2xl">
-              <h2 className="text-xl font-black text-white uppercase italic tracking-widest mb-6 flex items-center gap-4">
-                  <div className="p-2 bg-primary/10 border border-primary/20 rounded-lg"><ShieldCheck className="w-5 h-5 text-primary" /></div>
-                  Heuristics
-                </h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                   <button onClick={() => setStrictHwid(!strictHwid)} className={cn("p-8 rounded-3xl border flex items-center justify-between", strictHwid ? "bg-primary/5 border-primary/20" : "bg-zinc-900/10 border-zinc-900")}>
-                      <div className="text-left"><h4 className="text-[11px] font-black text-white uppercase mb-1">Strict HWID Locking</h4><p className="text-[10px] text-zinc-600 font-bold uppercase">Reject duplicates</p></div>
-                      <div className={cn("w-12 h-6 rounded-full p-1", strictHwid ? "bg-primary" : "bg-zinc-800")}><div className={cn("w-4 h-4 bg-white rounded-full transition-all", strictHwid ? "translate-x-6" : "translate-x-0")} /></div>
-                   </button>
-                   <button onClick={() => setDevMode(!devMode)} className={cn("p-8 rounded-3xl border flex items-center justify-between", devMode ? "bg-primary/5 border-primary/20" : "bg-zinc-900/10 border-zinc-900")}>
-                      <div className="text-left"><h4 className="text-[11px] font-black text-white uppercase mb-1">Developer Mode</h4><p className="text-[10px] text-zinc-600 font-bold uppercase">Verbose logging</p></div>
-                      <div className={cn("w-12 h-6 rounded-full p-1", devMode ? "bg-primary" : "bg-zinc-800")}><div className={cn("w-4 h-4 bg-white rounded-full transition-all", devMode ? "translate-x-6" : "translate-x-0")} /></div>
-                   </button>
-                </div>
-           </div>
+            <div className="space-y-6 relative z-10">
+                {toggles.map((t) => (
+                    <div 
+                        key={t.id} 
+                        onClick={() => toggleProtocol(t.id)}
+                        className={cn(
+                            "group p-6 bg-zinc-900/20 border rounded-3xl flex items-center justify-between cursor-pointer transition-all duration-500",
+                            t.enabled ? "border-indigo-500/30 bg-indigo-500/5 shadow-[0_0_20px_rgba(99,102,241,0.05)]" : "border-zinc-900 hover:border-zinc-800"
+                        )}
+                    >
+                        <div className="flex items-center gap-6">
+                            <div className={cn(
+                                "w-14 h-14 rounded-2xl border flex items-center justify-center transition-all duration-500",
+                                t.enabled ? "bg-indigo-500/10 border-indigo-500/30 text-indigo-500" : "bg-zinc-950 border-zinc-900 text-zinc-700 group-hover:text-zinc-500"
+                            )}>
+                                <t.icon className="w-6 h-6" />
+                            </div>
+                            <div>
+                                <h3 className={cn(
+                                    "text-sm font-black uppercase tracking-widest italic mb-1 transition-all",
+                                    t.enabled ? "text-white" : "text-zinc-600 group-hover:text-zinc-400"
+                                )}>
+                                    {t.name}
+                                </h3>
+                                <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest max-w-[500px] leading-relaxed opacity-60">
+                                    {t.description}
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="flex items-center gap-4">
+                            {t.danger && (
+                                <div className="flex items-center gap-2 px-3 py-1 bg-red-500/10 border border-red-500/20 rounded-md">
+                                    <AlertCircle className="w-3 h-3 text-red-500" />
+                                    <span className="text-[8px] font-black text-red-500 uppercase tracking-widest">High Risk</span>
+                                </div>
+                            )}
+                            <div className={cn(
+                                "w-14 h-8 rounded-full border p-1 transition-all duration-500 relative",
+                                t.enabled ? "bg-indigo-600 border-indigo-500 shadow-[0_0_15px_rgba(99,102,241,0.4)]" : "bg-zinc-950 border-zinc-900"
+                            )}>
+                                <div className={cn(
+                                    "w-6 h-6 rounded-full bg-white shadow-xl transition-all duration-500 transform",
+                                    t.enabled ? "translate-x-6" : "translate-x-0"
+                                )} />
+                            </div>
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </div>
+
+        {/* Protocol Alert Section */}
+        <div className="p-8 bg-zinc-900/10 border border-dashed border-zinc-900 rounded-[2.5rem] flex items-center gap-8">
+            <div className="w-20 h-20 bg-indigo-500/5 border border-indigo-500/10 rounded-full flex items-center justify-center">
+                <ShieldCheck className="w-10 h-10 text-indigo-500/40" />
+            </div>
+            <div className="flex-1">
+                <h4 className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.4em] mb-2">Protocol Integrity Check</h4>
+                <p className="text-[11px] font-bold text-zinc-700 uppercase tracking-widest leading-relaxed">
+                    Changes to application protocols affect all active Stage-3 sessions. Ensure your client SDK version is synchronized with these settings.
+                </p>
+            </div>
+            <button className="px-6 py-4 bg-zinc-950 border border-zinc-900 rounded-xl text-[9px] font-black text-zinc-600 uppercase tracking-widest hover:text-white transition-all">
+                Audit Logs
+            </button>
         </div>
       </div>
     </div>

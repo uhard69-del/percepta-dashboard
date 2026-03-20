@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { Header } from "@/components/Header";
 import { StatCard } from "@/components/StatCard";
-import { Radar } from "@/components/Radar";
 import { 
   Users, 
   Key, 
@@ -16,17 +15,14 @@ import {
   Target
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from "recharts";
+import { XAxis, YAxis, Tooltip, ResponsiveContainer, AreaChart, Area } from "recharts";
+import { RadarGlobe } from "@/components/RadarGlobe";
 
 // Robust API helper
 const getApiUrl = (path: string) => {
   const base = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
   const normalizedBase = base.endsWith("/") ? base.slice(0, -1) : base;
   const normalizedPath = path.startsWith("/") ? path : `/${path}`;
-  
-  if (normalizedBase.endsWith("/api") && normalizedPath.startsWith("/api/")) {
-    return `${normalizedBase}${normalizedPath.substring(4)}`;
-  }
   return `${normalizedBase}${normalizedPath}`;
 };
 
@@ -122,7 +118,7 @@ export default function DashboardPage() {
           <div className="lg:col-span-2 space-y-8">
              {/* 3D Radar Section */}
              <div className="bg-zinc-950/50 border border-zinc-900 rounded-[2.5rem] overflow-hidden shadow-2xl relative h-[500px]">
-                <Radar />
+                <RadarGlobe />
              </div>
 
              {/* Analytics Section */}
@@ -163,7 +159,7 @@ export default function DashboardPage() {
                <button className="text-[10px] font-black text-zinc-600 uppercase tracking-widest hover:text-white transition-colors">View All Stream</button>
             </div>
             
-            <div className="space-y-4 overflow-y-auto pr-2 custom-scrollbar">
+            <div className="space-y-4 overflow-y-auto pr-2 custom-scrollbar flex-1">
                {loading ? (
                   <div className="py-20 text-center text-[10px] font-bold text-zinc-700 uppercase tracking-[0.3em]">Connecting to log-server...</div>
                ) : logs.length > 0 ? (
