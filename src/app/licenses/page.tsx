@@ -106,8 +106,19 @@ export default function LicensesPage() {
   };
 
   const handleBulkTimeAdjust = async () => {
-    // Frontend-only simulation — backend endpoint would be /api/licenses/admin/licenses/bulk-time-adjust
-    alert(`${timeAdjustMode === "add" ? "Added" : "Removed"} ${timeAdjustDays} days ${timeAdjustMode === "add" ? "to" : "from"} all active licenses.`);
+    try {
+      const res = await fetch(getApiUrl(`/api/licenses/admin/licenses/bulk-time-adjust?days=${timeAdjustDays}&mode=${timeAdjustMode}`), {
+        method: "POST",
+        headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        alert(data.message || "Time adjusted successfully");
+        fetchData();
+      } else {
+        alert("Failed to adjust time");
+      }
+    } catch (err) { console.error("Bulk time adjust failure:", err); }
     setShowTimeModal(false);
   };
 
