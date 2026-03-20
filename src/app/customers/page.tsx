@@ -8,7 +8,7 @@ import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 
 const getApiUrl = (path: string) => {
-  const base = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+  const base = process.env.NEXT_PUBLIC_API_URL || "https://percepta-backend.onrender.com";
   const nb = base.endsWith("/") ? base.slice(0, -1) : base;
   const np = path.startsWith("/") ? path : `/${path}`;
   if (nb.endsWith("/api") && np.startsWith("/api/")) return `${nb}${np.substring(4)}`;

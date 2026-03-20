@@ -13,7 +13,7 @@ import { XAxis, YAxis, Tooltip, ResponsiveContainer, AreaChart, Area, BarChart, 
 import { RadarGlobe } from "@/components/RadarGlobe";
 
 const getApiUrl = (path: string) => {
-  const base = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+  const base = process.env.NEXT_PUBLIC_API_URL || "https://percepta-backend.onrender.com";
   const nb = base.endsWith("/") ? base.slice(0, -1) : base;
   const np = path.startsWith("/") ? path : `/${path}`;
   return `${nb}${np}`;

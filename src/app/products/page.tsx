@@ -20,7 +20,7 @@ import {
 import { cn } from "@/lib/utils";
 
 const getApiUrl = (path: string) => {
-  const base = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+  const base = process.env.NEXT_PUBLIC_API_URL || "https://percepta-backend.onrender.com";
   const normalizedBase = base.endsWith("/") ? base.slice(0, -1) : base;
   const normalizedPath = path.startsWith("/") ? path : `/${path}`;
   return `${normalizedBase}${normalizedPath}`;

@@ -34,7 +34,7 @@ export default function RegisterPage() {
     setError("");
 
     try {
-      const base = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+      const base = process.env.NEXT_PUBLIC_API_URL || "https://percepta-backend.onrender.com";
       const res = await fetch(`${base}/api/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },

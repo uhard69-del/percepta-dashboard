@@ -36,7 +36,7 @@ export default function StorePage() {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const base = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+        const base = process.env.NEXT_PUBLIC_API_URL || "https://percepta-backend.onrender.com";
         const res = await fetch(`${base}/api/products/public/list`);
         if (res.ok) {
           const data = await res.json();

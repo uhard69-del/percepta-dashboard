@@ -15,7 +15,7 @@ export default function LoginPage() {
     setIsLoading(true);
     
     try {
-      const base = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+      const base = process.env.NEXT_PUBLIC_API_URL || "https://percepta-backend.onrender.com";
       const formData = new URLSearchParams();
       formData.append("username", username);
       formData.append("password", password);
