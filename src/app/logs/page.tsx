@@ -6,178 +6,183 @@ import {
   Terminal, 
   Search, 
   Filter, 
-  Activity, 
-  Shield, 
-  Clock, 
-  MapPin, 
-  Cpu,
-  AlertCircle,
-  CheckCircle2,
-  XCircle,
-  Package
+  Pause, 
+  Play, 
+  RefreshCw,
+  Clock,
+  ChevronRight,
+  ShieldCheck,
+  ShieldAlert,
+  Zap
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-// Robust API helper
 const getApiUrl = (path: string) => {
   const base = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
   const normalizedBase = base.endsWith("/") ? base.slice(0, -1) : base;
   const normalizedPath = path.startsWith("/") ? path : `/${path}`;
-  
-  if (normalizedBase.endsWith("/api") && normalizedPath.startsWith("/api/")) {
-    return `${normalizedBase}${normalizedPath.substring(4)}`;
-  }
   return `${normalizedBase}${normalizedPath}`;
 };
 
 interface Log {
   id: string;
-  license_id?: string;
-  ip?: string;
-  hwid?: string;
   message: string;
+  status_type: string;
+  ip: string | null;
+  hwid: string | null;
   timestamp: string;
 }
 
-export default function LogsPage() {
+export default function RealtimePage() {
   const [logs, setLogs] = useState<Log[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState("");
-
-  useEffect(() => {
-    fetchLogs();
-    const interval = setInterval(fetchLogs, 10000); // Auto-refresh every 10s
-    return () => clearInterval(interval);
-  }, []);
+  const [isPaused, setIsPaused] = useState(false);
+  const [search, setSearch] = useState("");
 
   const fetchLogs = async () => {
+    if (isPaused) return;
     try {
       const res = await fetch(getApiUrl("/api/licenses/admin/logs"));
       if (res.ok) {
         setLogs(await res.json());
       }
     } catch (err) {
-      console.error("Failed to fetch logs:", err);
+      console.error("Link failure:", err);
     } finally {
       setLoading(false);
     }
   };
 
-  const filteredLogs = logs.filter(log => 
-    log.message.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    log.ip?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    log.hwid?.toLowerCase().includes(searchQuery.toLowerCase())
+  useEffect(() => {
+    fetchLogs();
+    const interval = setInterval(fetchLogs, 5000);
+    return () => clearInterval(interval);
+  }, [isPaused]);
+
+  const filtered = logs.filter(l => 
+    l.message.toLowerCase().includes(search.toLowerCase()) ||
+    (l.ip && l.ip.includes(search)) ||
+    (l.id && l.id.includes(search))
   );
 
   return (
     <div className="flex-1 overflow-auto bg-[#08080A]">
       <Header />
-      
       <div className="p-10 max-w-[1600px] mx-auto space-y-10">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-[40px] font-black text-white tracking-tighter uppercase italic leading-none mb-3">
-              Activity Logs
-            </h1>
-            <p className="text-zinc-500 text-xs font-bold uppercase tracking-[0.2em] opacity-60">
-              Real-time audit trail of all system operations
-            </p>
+            <div className="flex items-center gap-2 mb-1">
+                <div className={cn("w-2 h-2 rounded-full", isPaused ? "bg-amber-500" : "bg-emerald-500 animate-pulse")} />
+                <span className="text-[10px] font-black text-white uppercase tracking-[0.3em]">
+                    {isPaused ? "Buffer Paused" : "Live Security Link Active"}
+                </span>
+            </div>
+            <h1 className="text-4xl font-black text-white tracking-tighter uppercase italic leading-none">Realtime Status</h1>
           </div>
           
-          <div className="flex gap-3">
-             <div className="px-6 py-4 bg-primary/10 border border-primary/20 rounded-2xl flex items-center gap-3">
-                <div className="w-2 h-2 rounded-full bg-primary animate-ping" />
-                <span className="text-[10px] font-black text-primary uppercase tracking-widest italic">Live Feed Active</span>
-             </div>
+          <div className="flex gap-4">
+             <button 
+                onClick={() => setIsPaused(!isPaused)}
+                className={cn(
+                    "flex items-center gap-3 px-8 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all",
+                    isPaused ? "bg-emerald-600 text-white" : "bg-zinc-950 border border-zinc-900 text-zinc-500 hover:text-white"
+                )}
+             >
+                {isPaused ? <Play className="w-4 h-4 fill-current" /> : <Pause className="w-4 h-4 fill-current" />}
+                {isPaused ? "Resume Feed" : "Pause Interface"}
+             </button>
+             <button onClick={fetchLogs} className="p-4 bg-zinc-950 border border-zinc-900 rounded-2xl text-zinc-600 hover:text-white transition-all">
+                <RefreshCw className={cn("w-5 h-5", loading && "animate-spin")} />
+             </button>
           </div>
         </div>
 
-        {/* Search Bar */}
-        <div className="relative group max-w-2xl">
-          <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-600 group-focus-within:text-primary transition-colors" />
-          <input
-            type="text"
-            placeholder="FILTER BY MESSAGE, IP, OR HWID..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-zinc-950 border border-zinc-900 rounded-2xl py-5 pl-14 pr-4 text-[11px] font-bold tracking-[0.2em] text-white focus:outline-none focus:border-primary/40 transition-all placeholder:text-zinc-800 uppercase"
-          />
+        {/* Filters */}
+        <div className="flex items-center gap-4">
+            <div className="relative flex-1 max-w-md">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-600" />
+                <input 
+                    type="text"
+                    placeholder="SEARCH BY KEY, IP OR STATUS..."
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    className="w-full bg-zinc-900/30 border border-zinc-900 rounded-2xl py-4 pl-12 pr-4 text-[10px] font-black tracking-widest text-white placeholder:text-zinc-800 outline-none focus:ring-1 focus:ring-indigo-500/40 transition-all uppercase"
+                />
+            </div>
+            <button className="flex items-center gap-3 px-6 py-4 bg-zinc-900/40 border border-zinc-900 rounded-2xl text-[10px] font-black text-zinc-600 uppercase tracking-widest hover:border-zinc-800 transition-all">
+                <Filter className="w-4 h-4" />
+                Filter by Product
+            </button>
         </div>
 
-        {/* Logs Table */}
-        <div className="bg-zinc-950/50 border border-zinc-900 rounded-[2.5rem] overflow-hidden shadow-2xl">
-          {loading ? (
-             <div className="py-24 text-center">
-                <div className="w-12 h-12 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-6" />
-                <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest">Buffering encrypted stream...</p>
-             </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
+        {/* Realtime Table */}
+        <div className="bg-zinc-950/50 border border-zinc-900 rounded-[2.5rem] overflow-hidden shadow-2xl overflow-x-auto">
+            <table className="w-full text-left border-collapse min-w-max">
                 <thead>
-                  <tr className="bg-zinc-900/30 border-b border-zinc-900">
-                    <th className="px-8 py-6 text-[9px] font-black text-zinc-500 uppercase tracking-[0.3em]">Timestamp</th>
-                    <th className="px-8 py-6 text-[9px] font-black text-zinc-500 uppercase tracking-[0.3em]">Event Message</th>
-                    <th className="px-8 py-6 text-[9px] font-black text-zinc-500 uppercase tracking-[0.3em]">IP Address</th>
-                    <th className="px-8 py-6 text-[9px] font-black text-zinc-500 uppercase tracking-[0.3em]">HWID Status</th>
-                    <th className="px-8 py-6 text-[9px] font-black text-zinc-500 uppercase tracking-[0.3em]">Origin</th>
-                  </tr>
+                    <tr className="border-b border-zinc-900/50 bg-zinc-900/10">
+                        <th className="px-8 py-6 text-[9px] font-black text-zinc-600 uppercase tracking-widest">ID / Status</th>
+                        <th className="px-8 py-6 text-[9px] font-black text-zinc-600 uppercase tracking-widest">Date / Timestamp</th>
+                        <th className="px-8 py-6 text-[9px] font-black text-zinc-600 uppercase tracking-widest">Security Message</th>
+                        <th className="px-8 py-6 text-[9px] font-black text-zinc-600 uppercase tracking-widest">Relay Address</th>
+                        <th className="px-8 py-6 text-[9px] font-black text-zinc-600 uppercase tracking-widest text-right whitespace-nowrap">Audit Link</th>
+                    </tr>
                 </thead>
-                <tbody className="divide-y divide-zinc-900/50">
-                  {filteredLogs.map((log) => {
-                    const isError = log.message.toLowerCase().includes("failed") || log.message.toLowerCase().includes("banned");
-                    const isSuccess = log.message.toLowerCase().includes("success");
-
-                    return (
-                      <tr key={log.id} className="hover:bg-primary/[0.02] transition-colors group">
-                        <td className="px-8 py-6">
-                           <div className="flex items-center gap-3 text-zinc-500">
-                             <Clock className="w-3 h-3" />
-                             <span className="text-[10px] font-bold tracking-tighter uppercase whitespace-nowrap">
-                               {new Date(log.timestamp).toISOString().replace("T", " ").substring(0, 19)}
-                             </span>
-                           </div>
-                        </td>
-                        <td className="px-8 py-6">
-                           <div className="flex items-center gap-3">
-                              {isError ? <XCircle className="w-4 h-4 text-red-500" /> : isSuccess ? <CheckCircle2 className="w-4 h-4 text-emerald-500" /> : <Shield className="w-4 h-4 text-primary" />}
-                              <span className={cn(
-                                "text-xs font-black uppercase italic tracking-tight",
-                                isError ? "text-red-500" : isSuccess ? "text-emerald-500" : "text-white"
-                              )}>
-                                {log.message}
-                              </span>
-                           </div>
-                        </td>
-                        <td className="px-8 py-6">
-                           <span className="text-[10px] font-mono font-bold text-zinc-500 tracking-widest">{log.ip || "0.0.0.0"}</span>
-                        </td>
-                        <td className="px-8 py-6">
-                           <div className="flex items-center gap-2">
-                              <Cpu className="w-3 h-3 text-zinc-700" />
-                              <span className="text-[9px] font-black text-zinc-600 uppercase tracking-widest">
-                                {log.hwid ? "FINGERPRINTED" : "UNBOUND"}
-                              </span>
-                           </div>
-                        </td>
-                        <td className="px-8 py-6">
-                           <span className="text-[9px] font-black text-zinc-800 uppercase italic bg-zinc-900 px-3 py-1 rounded-lg">
-                             CLOUD_API_NODE
-                           </span>
-                        </td>
-                      </tr>
-                    );
-                  })}
+                <tbody className="divide-y divide-zinc-900/30">
+                    {loading ? (
+                        <tr>
+                            <td colSpan={5} className="py-20 text-center text-[10px] font-bold text-zinc-700 uppercase tracking-[0.4em]">Buffering Cloud Stream...</td>
+                        </tr>
+                    ) : filtered.length > 0 ? (
+                        filtered.map((log) => {
+                            const isFail = log.message.toLowerCase().includes("fail") || log.status_type !== "SUCCESS";
+                            return (
+                                <tr key={log.id} className="group hover:bg-zinc-900/10 transition-colors">
+                                    <td className="px-8 py-6">
+                                        <div className="flex items-center gap-4">
+                                            <p className="text-[10px] font-black text-zinc-700 uppercase tracking-widest italic group-hover:text-zinc-500 transition-colors">#{log.id.substring(0, 4)}</p>
+                                            <div className={cn(
+                                                "px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest border shadow-sm",
+                                                isFail ? "bg-red-500/10 text-red-500 border-red-500/20 shadow-red-500/5" : "bg-emerald-500/10 text-emerald-500 border-emerald-500/20 shadow-emerald-500/5"
+                                            )}>
+                                                {log.status_type || "EVENT"}
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td className="px-8 py-6">
+                                        <div className="flex items-center gap-2">
+                                            <Clock className="w-3 h-3 text-zinc-800" />
+                                            <span className="text-[10px] font-black text-zinc-500 uppercase italic">
+                                                {new Date(log.timestamp).toLocaleTimeString()}
+                                            </span>
+                                        </div>
+                                    </td>
+                                    <td className="px-8 py-6">
+                                        <div className="flex items-center gap-3">
+                                            {isFail ? <ShieldAlert className="w-4 h-4 text-red-500" /> : <ShieldCheck className="w-4 h-4 text-emerald-500" />}
+                                            <p className={cn(
+                                                "text-xs font-black uppercase italic tracking-tighter",
+                                                isFail ? "text-red-500" : "text-white"
+                                            )}>{log.message}</p>
+                                        </div>
+                                    </td>
+                                    <td className="px-8 py-6 font-mono text-[10px] font-bold text-zinc-600 tracking-widest">
+                                        {log.ip || "RELAY_HIDDEN"}
+                                    </td>
+                                    <td className="px-8 py-6 text-right">
+                                        <button className="p-3 bg-zinc-900/50 border border-zinc-900 rounded-xl hover:bg-zinc-900 hover:border-zinc-800 transition-all text-zinc-800 hover:text-white">
+                                            <ChevronRight className="w-4 h-4" />
+                                        </button>
+                                    </td>
+                                </tr>
+                            );
+                        })
+                    ) : (
+                        <tr>
+                            <td colSpan={5} className="py-20 text-center text-[10px] font-bold text-zinc-700 uppercase tracking-[0.4em]">No events in current buffer</td>
+                        </tr>
+                    )}
                 </tbody>
-              </table>
-              {filteredLogs.length === 0 && (
-                 <div className="py-32 text-center">
-                    <Terminal className="w-12 h-12 text-zinc-900 mx-auto mb-4" />
-                    <p className="text-[10px] font-bold text-zinc-700 uppercase tracking-[0.4em]">No matching events recorded</p>
-                 </div>
-              )}
-            </div>
-          )}
+            </table>
         </div>
       </div>
     </div>

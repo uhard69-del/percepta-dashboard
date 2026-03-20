@@ -11,7 +11,8 @@ import {
   Settings, 
   LogOut,
   ShieldCheck,
-  Activity
+  Activity,
+  Terminal
 } from "lucide-react";
 
 const navigation = [
@@ -20,6 +21,7 @@ const navigation = [
   { name: "Customer Hub", href: "/customers", icon: Users },
   { name: "License Management", href: "/products", icon: Package },
   { name: "Reseller Management", href: "/resellers", icon: Activity },
+  { name: "Integrate Hub", href: "/integrate", icon: Terminal },
   { name: "Activity Logs", href: "/logs", icon: Activity },
   { name: "Application", href: "/application", icon: ShieldCheck },
   { name: "Settings", href: "/settings", icon: Settings },
