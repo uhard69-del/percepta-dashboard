@@ -60,7 +60,9 @@ export default function ProductsPage() {
   const fetchProducts = async () => {
     setLoading(true);
     try {
-      const res = await fetch(getApiUrl("/api/products/admin/products"));
+      const res = await fetch(getApiUrl("/api/products/admin/products"), {
+        headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` }
+      });
       if (res.ok) {
         setProducts(await res.json());
       }
@@ -84,7 +86,10 @@ export default function ProductsPage() {
     try {
       const res = await fetch(getApiUrl("/api/products/admin/products"), {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${localStorage.getItem("token")}`
+        },
         body: JSON.stringify({ 
           name: newProductName, 
           description: newProductDesc,
@@ -117,7 +122,8 @@ export default function ProductsPage() {
   const handleRefillStock = async (name: string) => {
     try {
       const res = await fetch(getApiUrl(`/api/products/admin/products/${name}/refill?count=10`), {
-        method: "POST"
+        method: "POST",
+        headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` }
       });
       if (res.ok) {
         fetchProducts();

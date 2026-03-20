@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { Header } from "@/components/Header";
 import { StatCard } from "@/components/StatCard";
 import { 
@@ -95,7 +96,10 @@ export default function DashboardPage() {
     try {
       const res = await fetch(getApiUrl("/api/products/admin/products"), {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${localStorage.getItem("token")}`
+        },
         body: JSON.stringify({ name: newProjectName, description: "", price: "0", version: "1.0.0", is_enabled: true })
       });
       if (res.ok) { setShowCreateProject(false); setNewProjectName(""); }
@@ -118,6 +122,12 @@ export default function DashboardPage() {
             <p className="text-zinc-500 text-xs font-bold uppercase tracking-[0.2em]">Here&apos;s your overview for today</p>
           </div>
           <div className="flex gap-3">
+            <Link href="/store" target="_blank" className="flex items-center gap-2 px-5 py-3 bg-zinc-950 border border-zinc-900 text-zinc-500 font-black rounded-2xl hover:text-white transition-all uppercase tracking-widest text-[9px]">
+              <Package className="w-4 h-4" /> Store
+            </Link>
+            <Link href="/register" target="_blank" className="flex items-center gap-2 px-5 py-3 bg-zinc-950 border border-zinc-900 text-zinc-500 font-black rounded-2xl hover:text-white transition-all uppercase tracking-widest text-[9px]">
+              <Users className="w-4 h-4" /> Register
+            </Link>
             <button onClick={() => setShowWebhook(true)} className="flex items-center gap-2 px-5 py-3 bg-zinc-950 border border-zinc-900 text-zinc-500 font-black rounded-2xl hover:text-white transition-all uppercase tracking-widest text-[9px]">
               <Webhook className="w-4 h-4" /> Set Webhook
             </button>
