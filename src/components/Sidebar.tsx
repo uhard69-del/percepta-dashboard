@@ -17,8 +17,9 @@ import {
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { name: "Generated Keys", href: "/licenses", icon: Key },
+  { name: "Customer Hub", href: "/customers", icon: Users },
   { name: "License Management", href: "/products", icon: Package },
-  { name: "Reseller Management", href: "/resellers", icon: Users },
+  { name: "Reseller Management", href: "/resellers", icon: Activity },
   { name: "Activity Logs", href: "/logs", icon: Activity },
   { name: "Application", href: "/application", icon: ShieldCheck },
   { name: "Settings", href: "/settings", icon: Settings },
