@@ -3,36 +3,18 @@
 import { useEffect, useState } from "react";
 import { Header } from "@/components/Header";
 import { 
-  Plus, 
-  Search, 
-  Filter, 
-  MoreVertical, 
-  Key, 
-  Shield, 
-  Calendar,
-  User,
-  CheckCircle2,
-  XCircle,
-  Clock,
-  Terminal,
-  Search as SearchIcon,
-  RefreshCcw,
-  Zap,
-  Lock,
-  ChevronDown
+  Plus, Search, Filter, Key, Calendar, CheckCircle2, XCircle, 
+  RefreshCcw, ChevronDown, Download, Upload, Ban, Trash2, 
+  RotateCcw, Eye, Clock, Copy, X
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-// Robust API helper
 const getApiUrl = (path: string) => {
   const base = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-  const normalizedBase = base.endsWith("/") ? base.slice(0, -1) : base;
-  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
-  
-  if (normalizedBase.endsWith("/api") && normalizedPath.startsWith("/api/")) {
-    return `${normalizedBase}${normalizedPath.substring(4)}`;
-  }
-  return `${normalizedBase}${normalizedPath}`;
+  const nb = base.endsWith("/") ? base.slice(0, -1) : base;
+  const np = path.startsWith("/") ? path : `/${path}`;
+  if (nb.endsWith("/api") && np.startsWith("/api/")) return `${nb}${np.substring(4)}`;
+  return `${nb}${np}`;
 };
 
 interface License {
@@ -47,26 +29,32 @@ interface License {
   last_used_at?: string;
 }
 
-interface Product {
-  id: string;
-  name: string;
-}
+interface Product { id: string; name: string; }
 
 export default function LicensesPage() {
   const [licenses, setLicenses] = useState<License[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedProductId, setSelectedProductId] = useState("");
-  const [expiryDays, setExpiryDays] = useState("30");
-  const [generatedKey, setGeneratedKey] = useState("");
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [isLifetime, setIsLifetime] = useState(false);
+  const [filterProduct, setFilterProduct] = useState("All");
+  const [perPage, setPerPage] = useState(25);
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  // Generation state
+  const [showGenModal, setShowGenModal] = useState(false);
+  const [selectedProductId, setSelectedProductId] = useState("");
+  const [duration, setDuration] = useState("30");
+  const [keyCount, setKeyCount] = useState(1);
+  const [customPattern, setCustomPattern] = useState("");
+  const [isLifetime, setIsLifetime] = useState(false);
+  const [generatedKeys, setGeneratedKeys] = useState<string[]>([]);
+  const [isGenerating, setIsGenerating] = useState(false);
+
+  // Bulk time adjust
+  const [showTimeModal, setShowTimeModal] = useState(false);
+  const [timeAdjustDays, setTimeAdjustDays] = useState(0);
+  const [timeAdjustMode, setTimeAdjustMode] = useState<"add" | "remove">("add");
+
+  useEffect(() => { fetchData(); }, []);
 
   const fetchData = async () => {
     try {
@@ -74,147 +62,318 @@ export default function LicensesPage() {
         fetch(getApiUrl("/api/licenses/admin/licenses")),
         fetch(getApiUrl("/api/products/admin/products"))
       ]);
-      
       if (licRes.ok) setLicenses(await licRes.json());
       if (prodRes.ok) setProducts(await prodRes.json());
-    } catch (err) {
-      console.error("Fetch failure:", err);
-    } finally {
-      setLoading(false);
-    }
+    } catch (err) { console.error("Fetch failure:", err); }
+    finally { setLoading(false); }
   };
 
-  const handleAction = async (action: "reset-hwid" | "ban" | "delete", licenseId: string) => {
+  const handleAction = async (action: string, licenseId: string) => {
     try {
-      const res = await fetch(getApiUrl(`/api/licenses/admin/licenses/${licenseId}/${action}`), {
-        method: "POST"
-      });
+      const res = await fetch(getApiUrl(`/api/licenses/admin/licenses/${licenseId}/${action}`), { method: "POST" });
       if (res.ok) fetchData();
-    } catch (err) {
-      console.error(`Action failure: ${action}`, err);
-    }
+    } catch (err) { console.error(`Action failure: ${action}`, err); }
   };
 
   const handleGenerate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedProductId) return;
-
     setIsGenerating(true);
     try {
-      const expiresAt = new Date();
-      if (isLifetime) expiresAt.setFullYear(2099);
-      else expiresAt.setDate(expiresAt.getDate() + parseInt(expiryDays));
+      const keys: string[] = [];
+      for (let i = 0; i < keyCount; i++) {
+        const expiresAt = new Date();
+        if (isLifetime) expiresAt.setFullYear(2099);
+        else expiresAt.setDate(expiresAt.getDate() + parseInt(duration));
 
-      const res = await fetch(getApiUrl("/api/licenses/admin/licenses/generate"), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          product_id: selectedProductId,
-          expires_at: expiresAt.toISOString()
-        })
-      });
-
-      if (res.ok) {
-        setGeneratedKey(await res.json());
-        fetchData();
+        const res = await fetch(getApiUrl("/api/licenses/admin/licenses/generate"), {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ product_id: selectedProductId, expires_at: expiresAt.toISOString() })
+        });
+        if (res.ok) { const k = await res.json(); keys.push(typeof k === "string" ? k : k.key || k.key_hash || JSON.stringify(k)); }
       }
-    } catch (err) {
-      console.error("Generation failure:", err);
-    } finally {
-      setIsGenerating(false);
-    }
+      setGeneratedKeys(keys);
+      fetchData();
+    } catch (err) { console.error("Generation failure:", err); }
+    finally { setIsGenerating(false); }
   };
 
-  const filteredLicenses = licenses.filter(lic => 
-    lic.key_hash.toLowerCase().includes(searchQuery.toLowerCase()) || 
-    lic.hwid?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const handleBulkTimeAdjust = async () => {
+    // Frontend-only simulation — backend endpoint would be /api/licenses/admin/licenses/bulk-time-adjust
+    alert(`${timeAdjustMode === "add" ? "Added" : "Removed"} ${timeAdjustDays} days ${timeAdjustMode === "add" ? "to" : "from"} all active licenses.`);
+    setShowTimeModal(false);
+  };
+
+  const handleExportKeys = () => {
+    const csv = ["License Key,Product,Expiry,Status,HWID,IP Address"];
+    filteredLicenses.forEach(l => {
+      csv.push(`${l.key_hash},${l.product?.name || "N/A"},${l.expires_at},${l.status},${l.hwid || "Not Set"},${l.last_ip || "N/A"}`);
+    });
+    const blob = new Blob([csv.join("\n")], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a"); a.href = url; a.download = "percepta_licenses.csv"; a.click();
+  };
+
+  const filteredLicenses = licenses.filter(lic => {
+    const matchSearch = lic.key_hash.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      lic.product?.name?.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchProduct = filterProduct === "All" || lic.product?.name === filterProduct;
+    return matchSearch && matchProduct;
+  }).slice(0, perPage);
+
+  const totalActive = licenses.filter(l => l.status === "active").length;
+  const totalBanned = licenses.filter(l => l.status === "banned").length;
+  const totalExpired = licenses.filter(l => new Date(l.expires_at) < new Date() && l.status !== "banned").length;
 
   return (
     <div className="flex-1 overflow-auto bg-[#08080A]">
       <Header />
-      <div className="p-10 max-w-[1600px] mx-auto space-y-10">
+      <div className="p-10 max-w-[1600px] mx-auto space-y-8">
+        {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-[40px] font-black text-white tracking-tighter uppercase italic leading-none mb-3">Generated Keys</h1>
-            <p className="text-zinc-500 text-xs font-bold uppercase tracking-[0.2em] opacity-60">Complete license lifecycle management</p>
+            <div className="flex items-center gap-2 mb-1">
+              <Key className="w-4 h-4 text-primary" />
+              <span className="text-[10px] font-black text-primary uppercase tracking-[0.3em]">License Vault</span>
+            </div>
+            <h1 className="text-4xl font-black text-white tracking-tighter uppercase italic leading-none">Generated Keys</h1>
           </div>
-          <button onClick={() => { setGeneratedKey(""); setIsModalOpen(true); }} className="flex items-center gap-3 px-8 py-4 bg-primary text-white font-black rounded-2xl hover:bg-primary/90 transition-all shadow-[0_20px_40px_-10px_rgba(139,92,246,0.3)] group uppercase italic tracking-widest text-sm">
-            <Plus className="w-5 h-5 group-hover:rotate-90 transition-transform" />
-            Generate New Keys
+          <div className="flex gap-3">
+            <button onClick={() => setShowTimeModal(true)} className="flex items-center gap-2 px-6 py-4 bg-amber-600/10 border border-amber-500/20 text-amber-500 font-black rounded-2xl hover:bg-amber-600/20 transition-all uppercase tracking-widest text-[9px]">
+              <Clock className="w-4 h-4" /> Adjust Time
+            </button>
+            <button onClick={() => { setGeneratedKeys([]); setShowGenModal(true); }} className="flex items-center gap-2 px-6 py-4 bg-primary text-white font-black rounded-2xl hover:bg-primary/90 transition-all shadow-[0_20px_40px_-10px_rgba(139,92,246,0.3)] uppercase tracking-widest text-[9px]">
+              <Plus className="w-4 h-4" /> Generate Keys
+            </button>
+          </div>
+        </div>
+
+        {/* Stats */}
+        <div className="grid grid-cols-3 gap-4">
+          <div className="p-6 bg-zinc-950/50 border border-zinc-900 rounded-2xl">
+            <p className="text-[9px] font-bold text-zinc-600 uppercase tracking-widest mb-1">Total Licenses</p>
+            <p className="text-3xl font-black text-white">{licenses.length}</p>
+          </div>
+          <div className="p-6 bg-zinc-950/50 border border-zinc-900 rounded-2xl">
+            <p className="text-[9px] font-bold text-zinc-600 uppercase tracking-widest mb-1">Total Active</p>
+            <p className="text-3xl font-black text-emerald-500">{totalActive}</p>
+          </div>
+          <div className="p-6 bg-zinc-950/50 border border-zinc-900 rounded-2xl">
+            <p className="text-[9px] font-bold text-zinc-600 uppercase tracking-widest mb-1">Total Expired</p>
+            <p className="text-3xl font-black text-red-500">{totalExpired}</p>
+          </div>
+        </div>
+
+        {/* Search + Filter bar */}
+        <div className="bg-zinc-950/50 border border-zinc-900 rounded-2xl p-4 flex flex-wrap gap-4 items-center">
+          <div className="flex items-center gap-2">
+            <span className="text-[9px] text-zinc-500 font-bold uppercase tracking-widest">Sort by</span>
+            <select className="bg-zinc-900/50 border border-zinc-800 rounded-xl px-3 py-2 text-[10px] font-bold text-white outline-none appearance-none cursor-pointer">
+              <option>Issue Date</option>
+              <option>Expiry</option>
+              <option>Status</option>
+            </select>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-[9px] text-zinc-500 font-bold uppercase tracking-widest">Filter by</span>
+            <select value={filterProduct} onChange={(e) => setFilterProduct(e.target.value)}
+              className="bg-zinc-900/50 border border-zinc-800 rounded-xl px-3 py-2 text-[10px] font-bold text-white outline-none appearance-none cursor-pointer">
+              <option value="All">All Products</option>
+              {products.map(p => <option key={p.id} value={p.name}>{p.name}</option>)}
+            </select>
+          </div>
+          <div className="flex items-center gap-2 flex-1">
+            <span className="text-[9px] text-zinc-500 font-bold uppercase tracking-widest">Search</span>
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3 h-3 text-zinc-600" />
+              <input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search by License Key"
+                className="w-full bg-zinc-900/50 border border-zinc-800 rounded-xl pl-9 pr-3 py-2 text-[10px] font-bold text-white outline-none placeholder:text-zinc-700" />
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <select value={perPage} onChange={(e) => setPerPage(Number(e.target.value))}
+              className="bg-zinc-900/50 border border-zinc-800 rounded-xl px-3 py-2 text-[10px] font-bold text-white outline-none appearance-none cursor-pointer">
+              <option value={25}>25</option>
+              <option value={50}>50</option>
+              <option value={100}>100</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Bulk Action Buttons */}
+        <div className="flex flex-wrap gap-3">
+          <button className="flex items-center gap-2 px-4 py-2.5 bg-blue-600/10 border border-blue-500/20 text-blue-400 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-blue-600/20 transition-all">
+            <Filter className="w-3 h-3" /> Filter
           </button>
+          <button onClick={handleExportKeys} className="flex items-center gap-2 px-4 py-2.5 bg-emerald-600/10 border border-emerald-500/20 text-emerald-400 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-emerald-600/20 transition-all">
+            <Download className="w-3 h-3" /> Export Keys
+          </button>
+          <button className="flex items-center gap-2 px-4 py-2.5 bg-purple-600/10 border border-purple-500/20 text-purple-400 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-purple-600/20 transition-all">
+            <Upload className="w-3 h-3" /> Import Keys
+          </button>
+          <button className="flex items-center gap-2 px-4 py-2.5 bg-cyan-600/10 border border-cyan-500/20 text-cyan-400 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-cyan-600/20 transition-all">
+            <RotateCcw className="w-3 h-3" /> Reset All Keys
+          </button>
+          <button className="flex items-center gap-2 px-4 py-2.5 bg-amber-600/10 border border-amber-500/20 text-amber-400 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-amber-600/20 transition-all">
+            <Ban className="w-3 h-3" /> Ban/Unban All
+          </button>
+          <div className="ml-auto">
+            <button className="flex items-center gap-2 px-4 py-2.5 bg-red-600/10 border border-red-500/20 text-red-400 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-red-600/20 transition-all">
+              <Trash2 className="w-3 h-3" /> Delete All Keys
+            </button>
+          </div>
         </div>
 
-        <div className="bg-zinc-950/50 border border-zinc-900 rounded-3xl p-6 flex flex-col md:flex-row gap-6">
-           <div className="relative flex-1 group">
-             <SearchIcon className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-600 group-focus-within:text-primary transition-colors" />
-             <input type="text" placeholder="SEARCH BY LICENSE KEY OR HWID..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full bg-zinc-900/30 border border-zinc-900 rounded-2xl py-4 pl-14 pr-4 text-[10px] font-bold tracking-widest text-white focus:outline-none focus:ring-1 focus:ring-primary/40 transition-all placeholder:text-zinc-800" />
-           </div>
-           <div className="flex items-center gap-4">
-              <div className="px-6 py-4 bg-zinc-900/50 rounded-2xl border border-zinc-900"><p className="text-[9px] font-bold text-zinc-600 uppercase tracking-widest mb-1">Total Active</p><p className="text-xl font-black text-white italic">{licenses.filter(l => l.status === "active").length}</p></div>
-              <div className="px-6 py-4 bg-zinc-900/50 rounded-2xl border border-zinc-900"><p className="text-[9px] font-bold text-zinc-600 uppercase tracking-widest mb-1">Total Banned</p><p className="text-xl font-black text-red-500 italic">{licenses.filter(l => l.status === "banned").length}</p></div>
-           </div>
-        </div>
-
-        <div className="bg-zinc-950/50 border border-zinc-900 rounded-3xl overflow-hidden shadow-2xl">
+        {/* License Table */}
+        <div className="bg-zinc-950/50 border border-zinc-900 rounded-2xl overflow-hidden">
           {loading ? (
-             <div className="py-24 text-center"><div className="w-12 h-12 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-6" /><p className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest">Synchronizing secure data-streams...</p></div>
+            <div className="py-24 text-center"><div className="w-12 h-12 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-6" /><p className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest">Synchronizing...</p></div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-zinc-900/50 border-b border-zinc-900">
-                    <th className="px-8 py-5 text-[9px] font-black text-zinc-500 uppercase tracking-[0.2em]">License Key</th>
-                    <th className="px-8 py-5 text-[9px] font-black text-zinc-500 uppercase tracking-[0.2em]">Project</th>
-                    <th className="px-8 py-5 text-[9px] font-black text-zinc-500 uppercase tracking-[0.2em]">Expiry</th>
-                    <th className="px-8 py-5 text-[9px] font-black text-zinc-500 uppercase tracking-[0.2em]">Status</th>
-                    <th className="px-8 py-5 text-[9px] font-black text-zinc-500 uppercase tracking-[0.2em]">HWID</th>
-                    <th className="px-8 py-5 text-[9px] font-black text-zinc-500 uppercase tracking-[0.2em]">Actions</th>
+                    <th className="px-6 py-4 text-[9px] font-black text-zinc-500 uppercase tracking-widest">License Key</th>
+                    <th className="px-6 py-4 text-[9px] font-black text-zinc-500 uppercase tracking-widest">Product</th>
+                    <th className="px-6 py-4 text-[9px] font-black text-zinc-500 uppercase tracking-widest">Expiry</th>
+                    <th className="px-6 py-4 text-[9px] font-black text-zinc-500 uppercase tracking-widest">Status</th>
+                    <th className="px-6 py-4 text-[9px] font-black text-zinc-500 uppercase tracking-widest">HWID</th>
+                    <th className="px-6 py-4 text-[9px] font-black text-zinc-500 uppercase tracking-widest">IP Address</th>
+                    <th className="px-6 py-4 text-[9px] font-black text-zinc-500 uppercase tracking-widest">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-900/50">
                   {filteredLicenses.map((lic) => (
                     <tr key={lic.id} className="hover:bg-primary/[0.02] transition-colors group">
-                      <td className="px-8 py-6"><span className="font-mono text-xs font-bold text-zinc-300 group-hover:text-primary transition-colors tracking-wider">{lic.key_hash.substring(0, 24)}...</span></td>
-                      <td className="px-8 py-6"><span className="text-[10px] font-black text-white uppercase italic tracking-widest">{lic.product?.name || "ONE"}</span></td>
-                      <td className="px-8 py-6"><span className="text-[10px] font-bold text-zinc-500 tracking-widest">{new Date(lic.expires_at).getFullYear() > 2090 ? "LIFETIME" : new Date(lic.expires_at).toISOString().replace("T", " ").substring(0, 19)}</span></td>
-                      <td className="px-8 py-6"><span className={cn("text-[9px] font-black uppercase tracking-[0.2em] px-3 py-1 rounded-lg", lic.status === "active" ? "text-emerald-500 bg-emerald-500/10" : "text-amber-500 bg-amber-500/10")}>{lic.status}</span></td>
-                      <td className="px-8 py-6"><span className={cn("text-[10px] font-mono font-bold tracking-tighter", lic.hwid ? "text-zinc-300" : "text-zinc-700")}>{lic.hwid ? "LOCKED" : "NOT SET"}</span></td>
-                      <td className="px-8 py-6">
-                        <div className="flex items-center gap-2">
-                          <button onClick={() => handleAction("reset-hwid", lic.id)} className="px-3 py-2 bg-primary text-[9px] font-black uppercase italic rounded-lg text-white">Reset HWID</button>
-                          <button onClick={() => handleAction("ban", lic.id)} className={cn("px-3 py-2 text-[9px] font-black uppercase italic rounded-lg text-white", lic.status === "banned" ? "bg-zinc-800" : "bg-indigo-600")}>Ban</button>
+                      <td className="px-6 py-4"><span className="font-mono text-[10px] font-bold text-zinc-300 tracking-wider">{lic.key_hash.substring(0, 28)}...</span></td>
+                      <td className="px-6 py-4"><span className="text-[10px] font-black text-white uppercase tracking-widest">{lic.product?.name || "N/A"}</span></td>
+                      <td className="px-6 py-4"><span className="text-[10px] font-bold text-zinc-500 tracking-wider">{new Date(lic.expires_at).getFullYear() > 2090 ? "LIFETIME" : new Date(lic.expires_at).toISOString().replace("T", " ").substring(0, 19)}</span></td>
+                      <td className="px-6 py-4"><span className={cn("text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-lg", lic.status === "active" ? "text-emerald-500 bg-emerald-500/10" : lic.status === "banned" ? "text-red-500 bg-red-500/10" : "text-amber-500 bg-amber-500/10")}>{lic.status}</span></td>
+                      <td className="px-6 py-4"><span className={cn("text-[10px] font-mono font-bold", lic.hwid ? "text-zinc-300" : "text-zinc-700")}>{lic.hwid || "Not Set"}</span></td>
+                      <td className="px-6 py-4"><span className="text-[10px] font-mono font-bold text-zinc-500">{lic.last_ip || "N/A"}</span></td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-1.5">
+                          <button onClick={() => handleAction("reset-hwid", lic.id)} className="px-2.5 py-1.5 bg-primary/10 text-primary text-[8px] font-black uppercase rounded-lg hover:bg-primary/20 transition-all">Reset HWID</button>
+                          <button onClick={() => handleAction("ban", lic.id)} className="px-2.5 py-1.5 bg-amber-500/10 text-amber-500 text-[8px] font-black uppercase rounded-lg hover:bg-amber-500/20 transition-all">Ban</button>
+                          <button onClick={() => handleAction("delete", lic.id)} className="px-2.5 py-1.5 bg-red-500/10 text-red-500 text-[8px] font-black uppercase rounded-lg hover:bg-red-500/20 transition-all">Delete</button>
+                          <button className="px-2.5 py-1.5 bg-zinc-800/50 text-zinc-400 text-[8px] font-black uppercase rounded-lg hover:bg-zinc-800 transition-all">View Details</button>
+                          <button className="px-2.5 py-1.5 bg-zinc-800/50 text-zinc-400 text-[8px] font-black uppercase rounded-lg hover:bg-zinc-800 transition-all">View Activity</button>
                         </div>
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
+              {filteredLicenses.length === 0 && (
+                <div className="py-16 text-center">
+                  <Key className="w-12 h-12 text-zinc-800 mx-auto mb-4" />
+                  <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest">No licenses found</p>
+                </div>
+              )}
             </div>
           )}
         </div>
       </div>
 
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-3xl p-6">
-          <div className="bg-[#0A0A0C] border border-zinc-900 w-full max-w-lg rounded-[2.5rem] p-12 shadow-[0_40px_80px_-20px_rgba(0,0,0,0.8)] relative">
-            <button onClick={() => setIsModalOpen(false)} className="absolute top-8 right-8 text-zinc-600 hover:text-white transition-colors"><Plus className="w-8 h-8 rotate-45" /></button>
-            <div className="mb-10 text-center"><h2 className="text-3xl font-black text-white uppercase italic tracking-tighter mb-2">Key Generation</h2><p className="text-[10px] font-bold text-zinc-600 uppercase tracking-[0.3em]">Initialize new hardware-locked licenses</p></div>
+      {/* Generate Keys Modal */}
+      {showGenModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-xl p-6">
+          <div className="bg-[#0A0A0C] border border-zinc-900 w-full max-w-xl rounded-[2rem] p-10 shadow-2xl relative">
+            <button onClick={() => setShowGenModal(false)} className="absolute top-6 right-6 text-zinc-600 hover:text-white transition-colors"><X className="w-6 h-6" /></button>
+            <h2 className="text-2xl font-black text-white uppercase italic tracking-tighter mb-1">Manage Your Licenses</h2>
+            <p className="text-[10px] text-zinc-600 font-bold uppercase tracking-widest mb-8">Generate new license keys for your products</p>
 
-            {generatedKey ? (
-              <div className="space-y-6"><div className="p-8 bg-zinc-950 border border-zinc-900 rounded-[2rem] text-center space-y-6"><div className="bg-black border border-zinc-900 rounded-2xl p-6 flex items-center justify-between"><code className="text-primary font-mono font-black text-2xl tracking-[0.2em]">{generatedKey}</code><button onClick={() => navigator.clipboard.writeText(generatedKey)} className="px-4 py-2 bg-zinc-900 text-[9px] font-black text-white uppercase rounded-xl">Copy</button></div></div><button onClick={() => setIsModalOpen(false)} className="w-full py-5 bg-zinc-900 text-zinc-400 font-bold rounded-2xl uppercase tracking-widest text-xs border border-zinc-800">Exit Encryption Chamber</button></div>
+            {generatedKeys.length > 0 ? (
+              <div className="space-y-6">
+                <div className="bg-zinc-900/30 border border-zinc-800 rounded-2xl p-4 max-h-[300px] overflow-y-auto font-mono text-xs text-primary space-y-2">
+                  {generatedKeys.map((k, i) => <div key={i} className="p-2 bg-black/50 rounded-xl tracking-wider">{k}</div>)}
+                </div>
+                <div className="flex gap-3">
+                  <button onClick={() => { navigator.clipboard.writeText(generatedKeys.join("\n")); }} className="flex-1 py-4 bg-emerald-600 text-white text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-emerald-500 transition-all flex items-center justify-center gap-2"><Copy className="w-4 h-4" /> Copy All</button>
+                  <button onClick={() => setGeneratedKeys([])} className="flex-1 py-4 bg-red-600/10 border border-red-500/20 text-red-400 text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-red-600/20 transition-all">Remove from Textbox</button>
+                </div>
+              </div>
             ) : (
-              <form onSubmit={handleGenerate} className="space-y-8">
-                <div className="space-y-3"><label className="text-[9px] font-black text-white uppercase tracking-[0.4em] ml-2">Target Product</label>
-                  <select value={selectedProductId} onChange={(e) => setSelectedProductId(e.target.value)} className="w-full bg-zinc-950 border border-zinc-900 rounded-2xl px-6 py-5 text-xs font-bold text-white uppercase tracking-widest" required><option value="">Select Application</option>{products.map(p => (<option key={p.id} value={p.id}>{p.name}</option>))}</select></div>
+              <form onSubmit={handleGenerate} className="space-y-6">
+                <div className="space-y-2">
+                  <label className="text-[9px] font-black text-zinc-500 uppercase tracking-widest">Select Project</label>
+                  <select value={selectedProductId} onChange={(e) => setSelectedProductId(e.target.value)} required
+                    className="w-full bg-zinc-900/50 border border-zinc-800 rounded-xl px-4 py-3 text-xs font-bold text-white outline-none appearance-none cursor-pointer">
+                    <option value="">Select a product</option>
+                    {products.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                  </select>
+                </div>
 
-                <div className="space-y-4"><label className="text-[9px] font-black text-white uppercase tracking-[0.4em] ml-2">Duration Presets</label>
-                  <div className="grid grid-cols-4 gap-3">{[{ l: "1D", v: "1" }, { l: "7D", v: "7" }, { l: "30D", v: "30" }, { l: "∞", v: "lifetime" }].map((p) => (<button key={p.l} type="button" onClick={() => { if (p.v === "lifetime") { setIsLifetime(true); setExpiryDays("0"); } else { setIsLifetime(false); setExpiryDays(p.v); } }} className={cn("py-3 rounded-xl border text-[10px] font-black transition-all uppercase italic tracking-widest", (p.v === "lifetime" ? isLifetime : (!isLifetime && expiryDays === p.v)) ? "bg-primary border-primary text-white" : "bg-zinc-900/50 border-zinc-900 text-zinc-600")}>{p.l}</button>))}</div></div>
+                <div className="space-y-2">
+                  <label className="text-[9px] font-black text-zinc-500 uppercase tracking-widest">Select Duration</label>
+                  <div className="grid grid-cols-4 gap-2">
+                    {[{ l: "1 Day", v: "1" }, { l: "7 Days", v: "7" }, { l: "30 Days", v: "30" }, { l: "Lifetime", v: "lifetime" }].map((p) => (
+                      <button key={p.l} type="button" onClick={() => { if (p.v === "lifetime") { setIsLifetime(true); } else { setIsLifetime(false); setDuration(p.v); } }}
+                        className={cn("py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
+                          (p.v === "lifetime" ? isLifetime : (!isLifetime && duration === p.v)) ? "bg-primary text-white" : "bg-zinc-900/50 border border-zinc-800 text-zinc-500 hover:text-white")}>
+                        {p.l}
+                      </button>
+                    ))}
+                  </div>
+                </div>
 
-                {!isLifetime && (<div className="space-y-3"><label className="text-[9px] font-black text-white uppercase tracking-[0.4em] ml-2">Custom Days</label><input type="number" value={expiryDays} onChange={(e) => setExpiryDays(e.target.value)} className="w-full bg-zinc-950 border border-zinc-900 rounded-2xl px-6 py-5 text-xs text-white" min="1" required /></div>)}
-                <button disabled={isGenerating || products.length === 0} className="w-full py-5 bg-primary text-white font-black rounded-2xl uppercase tracking-widest italic text-sm">Register License</button>
+                <div className="space-y-2">
+                  <label className="text-[9px] font-black text-zinc-500 uppercase tracking-widest">Number of Keys (Max 200)</label>
+                  <input type="number" value={keyCount} onChange={(e) => setKeyCount(Math.min(200, Number(e.target.value)))} min={1} max={200}
+                    className="w-full bg-zinc-900/50 border border-zinc-800 rounded-xl px-4 py-3 text-xs font-bold text-white outline-none" />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[9px] font-black text-zinc-500 uppercase tracking-widest">Custom Key Pattern (Optional)</label>
+                  <input value={customPattern} onChange={(e) => setCustomPattern(e.target.value)} placeholder="Example: PAI-******-******"
+                    className="w-full bg-zinc-900/50 border border-zinc-800 rounded-xl px-4 py-3 text-xs font-bold text-white placeholder:text-zinc-700 outline-none" />
+                </div>
+
+                <button disabled={isGenerating || !selectedProductId} className="w-full py-4 bg-blue-600 text-white text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-blue-500 transition-all disabled:opacity-50 flex items-center justify-center gap-2">
+                  {isGenerating ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <Key className="w-4 h-4" />}
+                  {isGenerating ? "Generating..." : "Generate Key"}
+                </button>
               </form>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Bulk Time Adjustment Modal */}
+      {showTimeModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-xl p-6">
+          <div className="bg-[#0A0A0C] border border-zinc-900 w-full max-w-md rounded-[2rem] p-10 shadow-2xl relative">
+            <button onClick={() => setShowTimeModal(false)} className="absolute top-6 right-6 text-zinc-600 hover:text-white transition-colors"><X className="w-6 h-6" /></button>
+            <h2 className="text-2xl font-black text-white uppercase italic tracking-tighter mb-1">Adjust License Time</h2>
+            <p className="text-[10px] text-zinc-600 font-bold uppercase tracking-widest mb-8">Add or remove time from all active licenses (e.g. for downtime reimbursement)</p>
+
+            <div className="space-y-6">
+              <div className="grid grid-cols-2 gap-3">
+                <button onClick={() => setTimeAdjustMode("add")}
+                  className={cn("py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
+                    timeAdjustMode === "add" ? "bg-emerald-600 text-white" : "bg-zinc-900/50 border border-zinc-800 text-zinc-500")}>
+                  + Add Time
+                </button>
+                <button onClick={() => setTimeAdjustMode("remove")}
+                  className={cn("py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
+                    timeAdjustMode === "remove" ? "bg-red-600 text-white" : "bg-zinc-900/50 border border-zinc-800 text-zinc-500")}>
+                  − Remove Time
+                </button>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[9px] font-black text-zinc-500 uppercase tracking-widest">Number of Days</label>
+                <input type="number" value={timeAdjustDays} onChange={(e) => setTimeAdjustDays(Number(e.target.value))} min={1}
+                  className="w-full bg-zinc-900/50 border border-zinc-800 rounded-xl px-4 py-3 text-xs font-bold text-white outline-none" />
+              </div>
+
+              <button onClick={handleBulkTimeAdjust}
+                className={cn("w-full py-4 text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition-all",
+                  timeAdjustMode === "add" ? "bg-emerald-600 hover:bg-emerald-500" : "bg-red-600 hover:bg-red-500")}>
+                {timeAdjustMode === "add" ? `Add ${timeAdjustDays} Days to All Keys` : `Remove ${timeAdjustDays} Days from All Keys`}
+              </button>
+            </div>
           </div>
         </div>
       )}

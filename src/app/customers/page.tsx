@@ -1,72 +1,93 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { Header } from "@/components/Header";
 import { 
-  Users, 
-  Search, 
-  Filter, 
-  RefreshCw, 
-  MoreVertical, 
-  ExternalLink,
-  Mail,
-  MessageSquare,
-  Calendar,
-  Lock,
-  ChevronRight,
-  TrendingUp
+  Users, Search, Plus, ExternalLink, MoreHorizontal, X
 } from "lucide-react";
+import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 
 const getApiUrl = (path: string) => {
   const base = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-  const normalizedBase = base.endsWith("/") ? base.slice(0, -1) : base;
-  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
-  return `${normalizedBase}${normalizedPath}`;
+  const nb = base.endsWith("/") ? base.slice(0, -1) : base;
+  const np = path.startsWith("/") ? path : `/${path}`;
+  if (nb.endsWith("/api") && np.startsWith("/api/")) return `${nb}${np.substring(4)}`;
+  return `${nb}${np}`;
 };
 
 interface Customer {
   id: string;
-  username: string;
-  email: string | null;
-  discord_id: string | null;
-  avatar_url: string | null;
-  role: string;
-  credits: string;
-  created_at: string;
-  total_licenses: number;
-  total_logs: number;
+  username?: string;
+  email?: string;
+  discord_id?: string;
+  login_email?: string;
+  created_at?: string;
+  license_count?: number;
+  log_count?: number;
 }
 
 export default function CustomersPage() {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterBy, setFilterBy] = useState("ID");
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [newName, setNewName] = useState("");
+  const [newEmail, setNewEmail] = useState("");
+  const [newDiscord, setNewDiscord] = useState("");
 
-  const fetchData = async () => {
-    setLoading(true);
+  useEffect(() => { fetchCustomers(); }, []);
+
+  const fetchCustomers = async () => {
     try {
       const res = await fetch(getApiUrl("/api/users/admin/users"));
       if (res.ok) {
         const data = await res.json();
-        setCustomers(data);
+        setCustomers(data.map((u: Record<string, unknown>) => ({
+          id: u.id || u.user_id || "",
+          username: u.username || u.name || "",
+          email: u.email || "",
+          discord_id: u.discord_id || "",
+          login_email: u.login_email || u.email || "",
+          created_at: u.created_at || "",
+          license_count: u.license_count || 0,
+          log_count: u.log_count || 0,
+        })));
       }
-    } catch (error) {
-      console.error("CRM fetch failure:", error);
-    } finally {
-      setLoading(false);
-    }
+    } catch (err) { console.error("Failed to fetch customers:", err); }
+    finally { setLoading(false); }
   };
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  const handleCreate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const res = await fetch(getApiUrl("/api/users/admin/users"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: newName, email: newEmail, discord_id: newDiscord })
+      });
+      if (res.ok) { fetchCustomers(); setShowCreateModal(false); setNewName(""); setNewEmail(""); setNewDiscord(""); }
+    } catch (err) { console.error("Create failed:", err); }
+  };
 
-  const filtered = customers.filter(c => 
-    c.username.toLowerCase().includes(search.toLowerCase()) ||
-    c.id.toLowerCase().includes(search.toLowerCase()) ||
-    (c.email && c.email.toLowerCase().includes(search.toLowerCase()))
-  );
+  const filteredCustomers = customers.filter(c => {
+    const q = searchQuery.toLowerCase();
+    if (!q) return true;
+    if (filterBy === "ID") return c.id?.toLowerCase().includes(q);
+    if (filterBy === "Name") return c.username?.toLowerCase().includes(q);
+    if (filterBy === "Email") return (c.email || c.login_email)?.toLowerCase().includes(q);
+    return true;
+  });
+
+  const formatDate = (d: string) => {
+    if (!d) return "–";
+    const diff = Date.now() - new Date(d).getTime();
+    const days = Math.floor(diff / 86400000);
+    if (days < 1) return "Today";
+    if (days < 30) return `${days} days ago`;
+    if (days < 365) return `${Math.floor(days / 30)} months ago`;
+    return `${Math.floor(days / 365)} year${Math.floor(days / 365) > 1 ? "s" : ""} ago`;
+  };
 
   return (
     <div className="flex-1 overflow-auto bg-[#08080A]">
@@ -75,134 +96,121 @@ export default function CustomersPage() {
         <div className="flex items-center justify-between">
           <div>
             <div className="flex items-center gap-2 mb-1">
-                <Users className="w-4 h-4 text-indigo-500" />
-                <span className="text-[10px] font-black text-indigo-500 uppercase tracking-[0.3em]">Relationship Management</span>
+              <Users className="w-4 h-4 text-primary" />
+              <span className="text-[10px] font-black text-primary uppercase tracking-[0.3em]">CRM</span>
             </div>
-            <h1 className="text-4xl font-black text-white tracking-tighter uppercase italic leading-none">Customer Hub</h1>
+            <h1 className="text-4xl font-black text-white tracking-tighter uppercase italic leading-none">Customers</h1>
           </div>
-          <div className="flex gap-3">
-             <button 
-                onClick={fetchData}
-                className="p-4 bg-zinc-950 border border-zinc-900 rounded-2xl text-zinc-500 hover:text-white hover:border-zinc-800 transition-all"
-             >
-                <RefreshCw className={cn("w-5 h-5", loading && "animate-spin")} />
-             </button>
-             <button className="px-8 py-4 bg-indigo-600 rounded-2xl text-[10px] font-black text-white uppercase tracking-widest hover:bg-indigo-500 transition-all shadow-[0_0_20px_rgba(99,102,241,0.3)]">
-                Create Account
-             </button>
+          <button onClick={() => setShowCreateModal(true)} className="flex items-center gap-2 px-6 py-4 bg-primary text-white font-black rounded-2xl hover:bg-primary/90 transition-all shadow-[0_20px_40px_-10px_rgba(139,92,246,0.3)] uppercase tracking-widest text-[9px]">
+            <Plus className="w-4 h-4" /> Create
+          </button>
+        </div>
+
+        {/* Controls */}
+        <div className="bg-zinc-950/50 border border-zinc-900 rounded-2xl p-4 flex flex-wrap gap-4 items-center">
+          <div className="flex items-center gap-2">
+            <span className="text-[9px] text-zinc-500 font-bold uppercase tracking-widest">Filter by</span>
+            <select value={filterBy} onChange={(e) => setFilterBy(e.target.value)}
+              className="bg-zinc-900/50 border border-zinc-800 rounded-xl px-3 py-2 text-[10px] font-bold text-white outline-none appearance-none cursor-pointer">
+              <option>ID</option>
+              <option>Name</option>
+              <option>Email</option>
+            </select>
+          </div>
+          <div className="flex items-center gap-2 flex-1">
+            <span className="text-[9px] text-zinc-500 font-bold uppercase tracking-widest">Search</span>
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3 h-3 text-zinc-600" />
+              <input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder={`Search by ${filterBy.toLowerCase()}`}
+                className="w-full bg-zinc-900/50 border border-zinc-800 rounded-xl pl-9 pr-3 py-2 text-[10px] font-bold text-white outline-none placeholder:text-zinc-700" />
+            </div>
           </div>
         </div>
 
-        {/* Filters and Search */}
-        <div className="flex flex-wrap gap-4 items-center">
-            <div className="relative flex-1 max-w-md">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-600" />
-                <input 
-                    type="text"
-                    placeholder="SEARCH BY ID, MAIL OR USER..."
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    className="w-full bg-zinc-900/30 border border-zinc-900 rounded-2xl py-4 pl-12 pr-4 text-[10px] font-black tracking-widest text-white placeholder:text-zinc-800 focus:outline-none focus:ring-1 focus:ring-indigo-500/40 transition-all uppercase"
-                />
-            </div>
-            <button className="flex items-center gap-3 px-6 py-4 bg-zinc-900/40 border border-zinc-900 rounded-2xl group transition-all hover:border-zinc-800">
-                <Filter className="w-4 h-4 text-zinc-600 group-hover:text-indigo-500" />
-                <span className="text-[10px] font-black text-zinc-500 group-hover:text-white uppercase tracking-widest italic">Filter By Node</span>
-            </button>
-        </div>
-
-        {/* Customers Table */}
-        <div className="bg-zinc-950/50 border border-zinc-900 rounded-[2.5rem] overflow-hidden shadow-2xl">
-            <table className="w-full text-left border-collapse">
+        {/* Table */}
+        <div className="bg-zinc-950/50 border border-zinc-900 rounded-2xl overflow-hidden">
+          {loading ? (
+            <div className="py-24 text-center"><div className="w-12 h-12 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-6" /></div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
                 <thead>
-                    <tr className="border-b border-zinc-900/50">
-                        <th className="px-8 py-6 text-[10px] font-black text-zinc-600 uppercase tracking-widest">Customer Details</th>
-                        <th className="px-8 py-6 text-[10px] font-black text-zinc-600 uppercase tracking-widest text-center">Engagement</th>
-                        <th className="px-8 py-6 text-[10px] font-black text-zinc-600 uppercase tracking-widest">Security Link</th>
-                        <th className="px-8 py-6 text-[10px] font-black text-zinc-600 uppercase tracking-widest text-right">Action</th>
-                    </tr>
+                  <tr className="bg-zinc-900/50 border-b border-zinc-900">
+                    <th className="px-6 py-4 text-[9px] font-black text-zinc-500 uppercase tracking-widest">ID</th>
+                    <th className="px-6 py-4 text-[9px] font-black text-zinc-500 uppercase tracking-widest">Name</th>
+                    <th className="px-6 py-4 text-[9px] font-black text-zinc-500 uppercase tracking-widest">Discord ID</th>
+                    <th className="px-6 py-4 text-[9px] font-black text-zinc-500 uppercase tracking-widest">Login Email</th>
+                    <th className="px-6 py-4 text-[9px] font-black text-zinc-500 uppercase tracking-widest">Created At</th>
+                    <th className="px-6 py-4 text-[9px] font-black text-zinc-500 uppercase tracking-widest">Licenses</th>
+                    <th className="px-6 py-4 text-[9px] font-black text-zinc-500 uppercase tracking-widest">Total Logs</th>
+                    <th className="px-6 py-4 text-[9px] font-black text-zinc-500 uppercase tracking-widest">Actions</th>
+                  </tr>
                 </thead>
-                <tbody className="divide-y divide-zinc-900/30">
-                    {loading ? (
-                        <tr>
-                            <td colSpan={4} className="py-20 text-center text-[10px] font-bold text-zinc-700 uppercase tracking-[0.4em]">Decrypting Customer Buffer...</td>
-                        </tr>
-                    ) : filtered.length > 0 ? (
-                        filtered.map((c) => (
-                            <tr key={c.id} className="group hover:bg-zinc-900/10 transition-colors">
-                                <td className="px-8 py-6">
-                                    <div className="flex items-center gap-4">
-                                        <div className="relative">
-                                            <div className="w-12 h-12 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-center overflow-hidden">
-                                                {c.avatar_url ? (
-                                                    <img src={c.avatar_url} alt="" className="w-full h-full object-cover" />
-                                                ) : (
-                                                    <span className="text-zinc-700 font-black text-xl italic">{c.username[0].toUpperCase()}</span>
-                                                )}
-                                            </div>
-                                            <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-emerald-500 rounded-full border-2 border-[#09090b] shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
-                                        </div>
-                                        <div>
-                                            <div className="flex items-center gap-2 mb-1">
-                                                <p className="text-sm font-black text-white uppercase italic tracking-tighter">{c.username}</p>
-                                                <span className={cn(
-                                                    "text-[8px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded border",
-                                                    c.role === "admin" ? "bg-red-500/10 text-red-500 border-red-500/20" : 
-                                                    c.role === "reseller" ? "bg-indigo-500/10 text-indigo-500 border-indigo-500/20" :
-                                                    "bg-zinc-900 text-zinc-600 border-zinc-800"
-                                                )}>{c.role}</span>
-                                            </div>
-                                            <p className="text-[9px] text-zinc-500 font-bold uppercase tracking-widest leading-none truncate max-w-[200px]">{c.id}</p>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td className="px-8 py-6">
-                                    <div className="flex items-center justify-center gap-8">
-                                        <div className="text-center">
-                                            <p className="text-[9px] font-black text-zinc-700 uppercase tracking-widest mb-1">Licenses</p>
-                                            <div className="flex items-center justify-center gap-1.5 group/btn cursor-pointer">
-                                                <span className="text-sm font-black text-white italic group-hover/btn:text-indigo-400 transition-colors">{c.total_licenses}</span>
-                                                <ExternalLink className="w-2.5 h-2.5 text-zinc-800 group-hover/btn:text-indigo-600" />
-                                            </div>
-                                        </div>
-                                        <div className="w-[1px] h-8 bg-zinc-900" />
-                                        <div className="text-center">
-                                            <p className="text-[9px] font-black text-zinc-700 uppercase tracking-widest mb-1">Security Logs</p>
-                                            <div className="flex items-center justify-center gap-1.5 group/btn cursor-pointer">
-                                                <span className="text-sm font-black text-white italic group-hover/btn:text-indigo-400 transition-colors">{c.total_logs}</span>
-                                                <TrendingUp className="w-2.5 h-2.5 text-zinc-800 group-hover/btn:text-indigo-600" />
-                                            </div>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td className="px-8 py-6">
-                                    <div className="space-y-2">
-                                        <div className="flex items-center gap-2 text-[10px] font-black text-zinc-500 uppercase tracking-widest italic group-hover:text-indigo-500/60 transition-colors">
-                                            <MessageSquare className="w-3 h-3 text-indigo-500" />
-                                            {c.discord_id || "UNLINKED_NODE"}
-                                        </div>
-                                        <div className="flex items-center gap-2 text-[9px] font-black text-zinc-700 uppercase tracking-widest truncate max-w-[180px]">
-                                            <Mail className="w-3 h-3 text-zinc-800" />
-                                            {c.email || "NO_RELAY_CONFIGURED"}
-                                        </div>
-                                    </div>
-                                </td>
-                                <td className="px-8 py-6 text-right">
-                                    <button className="p-3 bg-zinc-900/50 border border-zinc-900 rounded-xl hover:bg-zinc-900 hover:border-zinc-800 transition-all text-zinc-600 hover:text-white">
-                                        <MoreVertical className="w-4 h-4" />
-                                    </button>
-                                </td>
-                            </tr>
-                        ))
-                    ) : (
-                        <tr>
-                            <td colSpan={4} className="py-20 text-center text-[10px] font-bold text-zinc-700 uppercase tracking-[0.4em]">No matching entities in database</td>
-                        </tr>
-                    )}
+                <tbody className="divide-y divide-zinc-900/50">
+                  {filteredCustomers.map((c) => (
+                    <tr key={c.id} className="hover:bg-primary/[0.02] transition-colors">
+                      <td className="px-6 py-4"><span className="text-[10px] font-mono font-bold text-zinc-500">{c.id?.substring(0, 12)}...</span></td>
+                      <td className="px-6 py-4"><span className="text-[10px] font-bold text-white">{c.username || "–"}</span></td>
+                      <td className="px-6 py-4"><span className="text-[10px] font-mono font-bold text-primary">{c.discord_id || "–"}</span></td>
+                      <td className="px-6 py-4"><span className="text-[10px] font-mono font-bold text-zinc-400">{c.login_email || "–"}</span></td>
+                      <td className="px-6 py-4"><span className="text-[10px] font-bold text-zinc-500">{formatDate(c.created_at || "")}</span></td>
+                      <td className="px-6 py-4">
+                        <span className="text-[10px] font-bold text-blue-400 flex items-center gap-1 cursor-pointer hover:text-blue-300">
+                          {c.license_count || 0} Licenses <ExternalLink className="w-3 h-3" />
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className="text-[10px] font-bold text-blue-400 flex items-center gap-1 cursor-pointer hover:text-blue-300">
+                          {c.log_count || 0} Logs <ExternalLink className="w-3 h-3" />
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <button className="p-2 hover:bg-zinc-800 rounded-lg transition-all">
+                          <MoreHorizontal className="w-4 h-4 text-zinc-500" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
                 </tbody>
-            </table>
+              </table>
+              {filteredCustomers.length === 0 && (
+                <div className="py-16 text-center">
+                  <Users className="w-12 h-12 text-zinc-800 mx-auto mb-4" />
+                  <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest">No customers found</p>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
+
+      {/* Create Customer Modal */}
+      {showCreateModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-xl p-6">
+          <div className="bg-[#0A0A0C] border border-zinc-900 w-full max-w-md rounded-[2rem] p-10 shadow-2xl relative">
+            <button onClick={() => setShowCreateModal(false)} className="absolute top-6 right-6 text-zinc-600 hover:text-white"><X className="w-6 h-6" /></button>
+            <h2 className="text-2xl font-black text-white uppercase italic tracking-tighter mb-6">Create Customer</h2>
+            <form onSubmit={handleCreate} className="space-y-5">
+              <div className="space-y-2">
+                <label className="text-[9px] font-black text-zinc-500 uppercase tracking-widest">Name</label>
+                <input value={newName} onChange={(e) => setNewName(e.target.value)} required
+                  className="w-full bg-zinc-900/50 border border-zinc-800 rounded-xl px-4 py-3 text-xs font-bold text-white outline-none" />
+              </div>
+              <div className="space-y-2">
+                <label className="text-[9px] font-black text-zinc-500 uppercase tracking-widest">Email</label>
+                <input type="email" value={newEmail} onChange={(e) => setNewEmail(e.target.value)}
+                  className="w-full bg-zinc-900/50 border border-zinc-800 rounded-xl px-4 py-3 text-xs font-bold text-white outline-none" />
+              </div>
+              <div className="space-y-2">
+                <label className="text-[9px] font-black text-zinc-500 uppercase tracking-widest">Discord ID</label>
+                <input value={newDiscord} onChange={(e) => setNewDiscord(e.target.value)}
+                  className="w-full bg-zinc-900/50 border border-zinc-800 rounded-xl px-4 py-3 text-xs font-bold text-white outline-none font-mono" />
+              </div>
+              <button className="w-full py-4 bg-primary text-white text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-primary/90 transition-all">Create Customer</button>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

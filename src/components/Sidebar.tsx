@@ -12,20 +12,25 @@ import {
   LogOut,
   ShieldCheck,
   Activity,
-  Terminal
+  Terminal,
+  Globe,
+  Code,
+  UserPlus
 } from "lucide-react";
 
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { name: "Generated Keys", href: "/licenses", icon: Key },
-  { name: "Customer Hub", href: "/customers", icon: Users },
   { name: "Product Hub", href: "/products", icon: Package },
-  { name: "Reseller Management", href: "/resellers", icon: Activity },
-  { name: "Integrate Hub", href: "/integrate", icon: Terminal },
-  { name: "Activity Logs", href: "/logs", icon: Activity },
+  { name: "Realtime", href: "/logs", icon: Activity },
+  { name: "Customers", href: "/customers", icon: Users },
+  { name: "Reseller Panel", href: "/resellers", icon: UserPlus },
   { name: "Application", href: "/application", icon: ShieldCheck },
   { name: "Settings", href: "/settings", icon: Settings },
+  { name: "API", href: "/api-docs", icon: Code },
+  { name: "Integrate", href: "/integrate", icon: Terminal },
 ];
+
 
 import { useRouter } from "next/navigation";
 
@@ -42,8 +47,8 @@ export function Sidebar() {
     <div className="flex h-full w-72 flex-col bg-[#0A0A0C] border-r border-zinc-900/50">
       <div className="flex h-24 items-center px-8">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-2xl bg-zinc-950 border border-zinc-900 shadow-2xl">
-            <ShieldCheck className="w-6 h-6 text-primary drop-shadow-[0_0_8px_rgba(139,92,246,0.4)]" />
+          <div className="p-1 rounded-2xl">
+            <img src="/logo.png" alt="PerceptaAI" className="w-10 h-10 object-contain drop-shadow-[0_0_8px_rgba(139,92,246,0.4)]" />
           </div>
           <span className="text-xl font-black tracking-tighter text-white uppercase italic">
             Percepta<span className="text-primary italic">AI</span>

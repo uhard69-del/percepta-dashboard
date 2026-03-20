@@ -1,188 +1,171 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { Header } from "@/components/Header";
 import { 
-  Terminal, 
-  Search, 
-  Filter, 
-  Pause, 
-  Play, 
-  RefreshCw,
-  Clock,
-  ChevronRight,
-  ShieldCheck,
-  ShieldAlert,
-  Zap
+  Activity, Search, Pause, Play, ChevronDown, ExternalLink
 } from "lucide-react";
+import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 
 const getApiUrl = (path: string) => {
   const base = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-  const normalizedBase = base.endsWith("/") ? base.slice(0, -1) : base;
-  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
-  return `${normalizedBase}${normalizedPath}`;
+  const nb = base.endsWith("/") ? base.slice(0, -1) : base;
+  const np = path.startsWith("/") ? path : `/${path}`;
+  if (nb.endsWith("/api") && np.startsWith("/api/")) return `${nb}${np.substring(4)}`;
+  return `${nb}${np}`;
 };
 
-interface Log {
+interface LogEntry {
   id: string;
-  message: string;
-  status_type: string;
-  ip: string | null;
-  hwid: string | null;
   timestamp: string;
+  action: string;
+  license_key?: string;
+  ip_address?: string;
+  details?: string;
+  product_name?: string;
 }
 
-export default function RealtimePage() {
-  const [logs, setLogs] = useState<Log[]>([]);
+const statusMap: Record<string, { label: string; color: string }> = {
+  "max_ips": { label: "MAX IPS", color: "text-red-500" },
+  "hwid_required": { label: "HWID REQUIRED", color: "text-amber-500" },
+  "success": { label: "SUCCESS", color: "text-emerald-500" },
+  "failed": { label: "FAILED", color: "text-red-500" },
+  "expired": { label: "EXPIRED", color: "text-red-400" },
+  "banned": { label: "BANNED", color: "text-red-600" },
+};
+
+function getStatus(entry: LogEntry) {
+  const action = entry.action?.toLowerCase() || "";
+  if (action.includes("max") || action.includes("ip")) return statusMap["max_ips"];
+  if (action.includes("hwid")) return statusMap["hwid_required"];
+  if (action.includes("success") || action.includes("valid")) return statusMap["success"];
+  if (action.includes("ban")) return statusMap["banned"];
+  if (action.includes("expir")) return statusMap["expired"];
+  return { label: action.toUpperCase().substring(0, 20), color: "text-zinc-400" };
+}
+
+export default function LogsPage() {
+  const [logs, setLogs] = useState<LogEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [isPaused, setIsPaused] = useState(false);
-  const [search, setSearch] = useState("");
-
-  const fetchLogs = async () => {
-    if (isPaused) return;
-    try {
-      const res = await fetch(getApiUrl("/api/licenses/admin/logs"));
-      if (res.ok) {
-        setLogs(await res.json());
-      }
-    } catch (err) {
-      console.error("Link failure:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const [searchProduct, setSearchProduct] = useState("");
+  const [logLimit, setLogLimit] = useState(50);
 
   useEffect(() => {
     fetchLogs();
-    const interval = setInterval(fetchLogs, 5000);
-    return () => clearInterval(interval);
+    if (!isPaused) {
+      const interval = setInterval(fetchLogs, 5000);
+      return () => clearInterval(interval);
+    }
   }, [isPaused]);
 
-  const filtered = logs.filter(l => 
-    l.message.toLowerCase().includes(search.toLowerCase()) ||
-    (l.ip && l.ip.includes(search)) ||
-    (l.id && l.id.includes(search))
-  );
+  const fetchLogs = async () => {
+    try {
+      const res = await fetch(getApiUrl("/api/logs/admin/logs"));
+      if (res.ok) setLogs(await res.json());
+    } catch (err) { console.error("Failed to fetch logs:", err); }
+    finally { setLoading(false); }
+  };
+
+  const filteredLogs = logs
+    .filter(l => !searchProduct || l.product_name?.toLowerCase().includes(searchProduct.toLowerCase()))
+    .slice(0, logLimit);
+
+  const formatDate = (ts: string) => {
+    try {
+      const d = new Date(ts);
+      return `${d.toLocaleDateString("en-GB", { day: "2-digit", month: "2-digit", year: "numeric" })}, ${d.toLocaleTimeString("en-GB", { hour12: false })}`;
+    } catch { return ts; }
+  };
 
   return (
     <div className="flex-1 overflow-auto bg-[#08080A]">
       <Header />
-      <div className="p-10 max-w-[1600px] mx-auto space-y-10">
-        <div className="flex items-center justify-between">
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-                <div className={cn("w-2 h-2 rounded-full", isPaused ? "bg-amber-500" : "bg-emerald-500 animate-pulse")} />
-                <span className="text-[10px] font-black text-white uppercase tracking-[0.3em]">
-                    {isPaused ? "Buffer Paused" : "Live Security Link Active"}
-                </span>
-            </div>
-            <h1 className="text-4xl font-black text-white tracking-tighter uppercase italic leading-none">Realtime Status</h1>
+      <div className="p-10 max-w-[1600px] mx-auto space-y-8">
+        {/* Header */}
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <Activity className="w-4 h-4 text-primary" />
+            <span className="text-[10px] font-black text-primary uppercase tracking-[0.3em]">Realtime</span>
           </div>
-          
-          <div className="flex gap-4">
-             <button 
-                onClick={() => setIsPaused(!isPaused)}
-                className={cn(
-                    "flex items-center gap-3 px-8 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all",
-                    isPaused ? "bg-emerald-600 text-white" : "bg-zinc-950 border border-zinc-900 text-zinc-500 hover:text-white"
-                )}
-             >
-                {isPaused ? <Play className="w-4 h-4 fill-current" /> : <Pause className="w-4 h-4 fill-current" />}
-                {isPaused ? "Resume Feed" : "Pause Interface"}
-             </button>
-             <button onClick={fetchLogs} className="p-4 bg-zinc-950 border border-zinc-900 rounded-2xl text-zinc-600 hover:text-white transition-all">
-                <RefreshCw className={cn("w-5 h-5", loading && "animate-spin")} />
-             </button>
-          </div>
+          <h1 className="text-4xl font-black text-white tracking-tighter uppercase italic leading-none mb-2">Live Monitoring</h1>
+          <p className="text-zinc-500 text-xs font-bold uppercase tracking-[0.2em]">License API Requests</p>
         </div>
 
-        {/* Filters */}
-        <div className="flex items-center gap-4">
-            <div className="relative flex-1 max-w-md">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-600" />
-                <input 
-                    type="text"
-                    placeholder="SEARCH BY KEY, IP OR STATUS..."
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    className="w-full bg-zinc-900/30 border border-zinc-900 rounded-2xl py-4 pl-12 pr-4 text-[10px] font-black tracking-widest text-white placeholder:text-zinc-800 outline-none focus:ring-1 focus:ring-indigo-500/40 transition-all uppercase"
-                />
+        {/* Controls bar */}
+        <div className="bg-zinc-950/50 border border-zinc-900 rounded-2xl p-4 flex flex-wrap gap-4 items-center">
+          <div className="flex items-center gap-2">
+            <span className="text-[9px] text-zinc-600 font-bold uppercase tracking-widest">License API Requests</span>
+            <div className={cn("w-2 h-2 rounded-full", isPaused ? "bg-red-500" : "bg-emerald-500 animate-pulse")} />
+          </div>
+
+          <div className="flex items-center gap-2">
+            <select className="bg-zinc-900/50 border border-zinc-800 rounded-xl px-3 py-2 text-[10px] font-bold text-white outline-none appearance-none cursor-pointer">
+              <option>Product</option>
+            </select>
+            <div className="relative flex-1 min-w-[200px]">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3 h-3 text-zinc-600" />
+              <input value={searchProduct} onChange={(e) => setSearchProduct(e.target.value)} placeholder="Search by Product"
+                className="w-full bg-zinc-900/50 border border-zinc-800 rounded-xl pl-9 pr-3 py-2 text-[10px] font-bold text-white outline-none placeholder:text-zinc-700" />
             </div>
-            <button className="flex items-center gap-3 px-6 py-4 bg-zinc-900/40 border border-zinc-900 rounded-2xl text-[10px] font-black text-zinc-600 uppercase tracking-widest hover:border-zinc-800 transition-all">
-                <Filter className="w-4 h-4" />
-                Filter by Product
+          </div>
+
+          <div className="ml-auto flex items-center gap-3">
+            <select value={logLimit} onChange={(e) => setLogLimit(Number(e.target.value))}
+              className="bg-zinc-900/50 border border-zinc-800 rounded-xl px-3 py-2 text-[10px] font-bold text-white outline-none appearance-none cursor-pointer">
+              <option value={50}>Show 50 Logs</option>
+              <option value={100}>Show 100 Logs</option>
+              <option value={250}>Show 250 Logs</option>
+            </select>
+            <button onClick={() => setIsPaused(!isPaused)}
+              className={cn("w-9 h-9 rounded-full flex items-center justify-center transition-all",
+                isPaused ? "bg-emerald-600 hover:bg-emerald-500" : "bg-emerald-600 hover:bg-emerald-500")}>
+              {isPaused ? <Play className="w-4 h-4 text-white" /> : <Pause className="w-4 h-4 text-white" />}
             </button>
+          </div>
         </div>
 
-        {/* Realtime Table */}
-        <div className="bg-zinc-950/50 border border-zinc-900 rounded-[2.5rem] overflow-hidden shadow-2xl overflow-x-auto">
-            <table className="w-full text-left border-collapse min-w-max">
+        {/* Log Table */}
+        <div className="bg-zinc-950/50 border border-zinc-900 rounded-2xl overflow-hidden">
+          {loading ? (
+            <div className="py-24 text-center"><div className="w-12 h-12 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-6" /><p className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest">Loading realtime data...</p></div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
                 <thead>
-                    <tr className="border-b border-zinc-900/50 bg-zinc-900/10">
-                        <th className="px-8 py-6 text-[9px] font-black text-zinc-600 uppercase tracking-widest">ID / Status</th>
-                        <th className="px-8 py-6 text-[9px] font-black text-zinc-600 uppercase tracking-widest">Date / Timestamp</th>
-                        <th className="px-8 py-6 text-[9px] font-black text-zinc-600 uppercase tracking-widest">Security Message</th>
-                        <th className="px-8 py-6 text-[9px] font-black text-zinc-600 uppercase tracking-widest">Relay Address</th>
-                        <th className="px-8 py-6 text-[9px] font-black text-zinc-600 uppercase tracking-widest text-right whitespace-nowrap">Audit Link</th>
-                    </tr>
+                  <tr className="bg-zinc-900/50 border-b border-zinc-900">
+                    <th className="px-6 py-4 text-[9px] font-black text-zinc-500 uppercase tracking-widest">ID</th>
+                    <th className="px-6 py-4 text-[9px] font-black text-zinc-500 uppercase tracking-widest">Status</th>
+                    <th className="px-6 py-4 text-[9px] font-black text-zinc-500 uppercase tracking-widest">Date</th>
+                    <th className="px-6 py-4 text-[9px] font-black text-zinc-500 uppercase tracking-widest">License Key</th>
+                    <th className="px-6 py-4 text-[9px] font-black text-zinc-500 uppercase tracking-widest">Product</th>
+                    <th className="px-6 py-4 text-[9px] font-black text-zinc-500 uppercase tracking-widest">IP Address</th>
+                  </tr>
                 </thead>
-                <tbody className="divide-y divide-zinc-900/30">
-                    {loading ? (
-                        <tr>
-                            <td colSpan={5} className="py-20 text-center text-[10px] font-bold text-zinc-700 uppercase tracking-[0.4em]">Buffering Cloud Stream...</td>
-                        </tr>
-                    ) : filtered.length > 0 ? (
-                        filtered.map((log) => {
-                            const isFail = log.message.toLowerCase().includes("fail") || log.status_type !== "SUCCESS";
-                            return (
-                                <tr key={log.id} className="group hover:bg-zinc-900/10 transition-colors">
-                                    <td className="px-8 py-6">
-                                        <div className="flex items-center gap-4">
-                                            <p className="text-[10px] font-black text-zinc-700 uppercase tracking-widest italic group-hover:text-zinc-500 transition-colors">#{log.id.substring(0, 4)}</p>
-                                            <div className={cn(
-                                                "px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest border shadow-sm",
-                                                isFail ? "bg-red-500/10 text-red-500 border-red-500/20 shadow-red-500/5" : "bg-emerald-500/10 text-emerald-500 border-emerald-500/20 shadow-emerald-500/5"
-                                            )}>
-                                                {log.status_type || "EVENT"}
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td className="px-8 py-6">
-                                        <div className="flex items-center gap-2">
-                                            <Clock className="w-3 h-3 text-zinc-800" />
-                                            <span className="text-[10px] font-black text-zinc-500 uppercase italic">
-                                                {new Date(log.timestamp).toLocaleTimeString()}
-                                            </span>
-                                        </div>
-                                    </td>
-                                    <td className="px-8 py-6">
-                                        <div className="flex items-center gap-3">
-                                            {isFail ? <ShieldAlert className="w-4 h-4 text-red-500" /> : <ShieldCheck className="w-4 h-4 text-emerald-500" />}
-                                            <p className={cn(
-                                                "text-xs font-black uppercase italic tracking-tighter",
-                                                isFail ? "text-red-500" : "text-white"
-                                            )}>{log.message}</p>
-                                        </div>
-                                    </td>
-                                    <td className="px-8 py-6 font-mono text-[10px] font-bold text-zinc-600 tracking-widest">
-                                        {log.ip || "RELAY_HIDDEN"}
-                                    </td>
-                                    <td className="px-8 py-6 text-right">
-                                        <button className="p-3 bg-zinc-900/50 border border-zinc-900 rounded-xl hover:bg-zinc-900 hover:border-zinc-800 transition-all text-zinc-800 hover:text-white">
-                                            <ChevronRight className="w-4 h-4" />
-                                        </button>
-                                    </td>
-                                </tr>
-                            );
-                        })
-                    ) : (
-                        <tr>
-                            <td colSpan={5} className="py-20 text-center text-[10px] font-bold text-zinc-700 uppercase tracking-[0.4em]">No events in current buffer</td>
-                        </tr>
-                    )}
+                <tbody className="divide-y divide-zinc-900/50">
+                  {filteredLogs.map((log, i) => {
+                    const status = getStatus(log);
+                    return (
+                      <tr key={log.id || i} className="hover:bg-primary/[0.02] transition-colors">
+                        <td className="px-6 py-4"><span className="text-[10px] font-mono font-bold text-zinc-500">#{log.id?.substring(0, 8) || i}</span></td>
+                        <td className="px-6 py-4"><span className={cn("text-[10px] font-mono font-black tracking-wider", status.color)}>{status.label}</span></td>
+                        <td className="px-6 py-4"><span className="text-[10px] font-mono font-bold text-zinc-400">{formatDate(log.timestamp)}</span></td>
+                        <td className="px-6 py-4"><span className="text-[10px] font-mono font-bold text-zinc-300">{log.license_key?.substring(0, 24) || "N/A"}</span></td>
+                        <td className="px-6 py-4"><span className="text-[10px] font-mono font-bold text-zinc-500">{log.product_name || "N/A"}</span></td>
+                        <td className="px-6 py-4"><span className="text-[10px] font-mono font-bold text-zinc-500">{log.ip_address || "N/A"}</span></td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
-            </table>
+              </table>
+              {filteredLogs.length === 0 && (
+                <div className="py-16 text-center">
+                  <Activity className="w-12 h-12 text-zinc-800 mx-auto mb-4" />
+                  <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest">No log entries found</p>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>
