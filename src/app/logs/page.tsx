@@ -61,7 +61,9 @@ export default function LogsPage() {
 
   const fetchLogs = async () => {
     try {
-      const res = await fetch(getApiUrl("/api/logs/admin/logs"));
+      const res = await fetch(getApiUrl("/api/logs/admin/logs"), {
+        headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` }
+      });
       if (res.ok) setLogs(await res.json());
     } catch (err) { console.error("Failed to fetch logs:", err); }
     finally { setLoading(false); }

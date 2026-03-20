@@ -45,7 +45,7 @@ export default function ApplicationPage() {
   const [integrityCheck, setIntegrityCheck] = useState(true);
 
   useEffect(() => {
-    fetch(getApiUrl("/api/products/admin/products"))
+    fetch(getApiUrl("/api/products/admin/products"), { headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` } })
       .then(r => r.ok ? r.json() : [])
       .then(d => { setProducts(d); if (d.length > 0) setSelectedProduct(d[0].name); })
       .catch(() => {});

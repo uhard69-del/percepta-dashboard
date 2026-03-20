@@ -40,7 +40,9 @@ export default function CustomersPage() {
 
   const fetchCustomers = async () => {
     try {
-      const res = await fetch(getApiUrl("/api/users/admin/users"));
+      const res = await fetch(getApiUrl("/api/users/admin/users"), {
+        headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` }
+      });
       if (res.ok) {
         const data = await res.json();
         setCustomers(data.map((u: Record<string, unknown>) => ({
@@ -63,7 +65,10 @@ export default function CustomersPage() {
     try {
       const res = await fetch(getApiUrl("/api/users/admin/users"), {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${localStorage.getItem("token")}`
+        },
         body: JSON.stringify({ username: newName, email: newEmail, discord_id: newDiscord })
       });
       if (res.ok) { fetchCustomers(); setShowCreateModal(false); setNewName(""); setNewEmail(""); setNewDiscord(""); }

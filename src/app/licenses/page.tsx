@@ -59,8 +59,8 @@ export default function LicensesPage() {
   const fetchData = async () => {
     try {
       const [licRes, prodRes] = await Promise.all([
-        fetch(getApiUrl("/api/licenses/admin/licenses")),
-        fetch(getApiUrl("/api/products/admin/products"))
+        fetch(getApiUrl("/api/licenses/admin/licenses"), { headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` } }),
+        fetch(getApiUrl("/api/products/admin/products"), { headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` } })
       ]);
       if (licRes.ok) setLicenses(await licRes.json());
       if (prodRes.ok) setProducts(await prodRes.json());
@@ -70,7 +70,10 @@ export default function LicensesPage() {
 
   const handleAction = async (action: string, licenseId: string) => {
     try {
-      const res = await fetch(getApiUrl(`/api/licenses/admin/licenses/${licenseId}/${action}`), { method: "POST" });
+      const res = await fetch(getApiUrl(`/api/licenses/admin/licenses/${licenseId}/${action}`), { 
+        method: "POST",
+        headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` }
+      });
       if (res.ok) fetchData();
     } catch (err) { console.error(`Action failure: ${action}`, err); }
   };
@@ -88,7 +91,10 @@ export default function LicensesPage() {
 
         const res = await fetch(getApiUrl("/api/licenses/admin/licenses/generate"), {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { 
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${localStorage.getItem("token")}`
+          },
           body: JSON.stringify({ product_id: selectedProductId, expires_at: expiresAt.toISOString() })
         });
         if (res.ok) { const k = await res.json(); keys.push(typeof k === "string" ? k : k.key || k.key_hash || JSON.stringify(k)); }

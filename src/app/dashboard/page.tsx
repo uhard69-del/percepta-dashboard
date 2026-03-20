@@ -37,9 +37,9 @@ export default function DashboardPage() {
     const fetchData = async () => {
       try {
         const [prodRes, licRes, logRes] = await Promise.all([
-          fetch(getApiUrl("/api/products/admin/products")),
-          fetch(getApiUrl("/api/licenses/admin/licenses")),
-          fetch(getApiUrl("/api/licenses/admin/logs"))
+          fetch(getApiUrl("/api/products/admin/products"), { headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` } }),
+          fetch(getApiUrl("/api/licenses/admin/licenses"), { headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` } }),
+          fetch(getApiUrl("/api/licenses/admin/logs"), { headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` } })
         ]);
 
         if (prodRes.ok && licRes.ok && logRes.ok) {

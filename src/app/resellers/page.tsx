@@ -56,7 +56,9 @@ export default function ResellersPage() {
 
   const fetchResellers = async () => {
     try {
-      const res = await fetch(getApiUrl("/api/resellers/admin/resellers"));
+      const res = await fetch(getApiUrl("/api/resellers/admin/resellers"), {
+        headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` }
+      });
       if (res.ok) {
         setResellers(await res.json());
       }
@@ -76,7 +78,10 @@ export default function ResellersPage() {
     try {
       const res = await fetch(getApiUrl("/api/resellers/admin/resellers"), {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${localStorage.getItem("token")}`
+        },
         body: JSON.stringify({ 
           username: newUsername, 
           password: newPassword, 
@@ -106,7 +111,8 @@ export default function ResellersPage() {
   const handleUpdateCredits = async (id: string, amount: string) => {
      try {
         const res = await fetch(getApiUrl(`/api/resellers/admin/resellers/${id}/credits?amount=${amount}`), {
-           method: "POST"
+           method: "POST",
+           headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` }
         });
         if (res.ok) fetchResellers();
      } catch (err) {
@@ -118,7 +124,8 @@ export default function ResellersPage() {
      if (!confirm("Are you sure? This will remove the reseller account.")) return;
      try {
         const res = await fetch(getApiUrl(`/api/resellers/admin/resellers/${id}`), {
-           method: "DELETE"
+           method: "DELETE",
+           headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` }
         });
         if (res.ok) fetchResellers();
      } catch (err) {
