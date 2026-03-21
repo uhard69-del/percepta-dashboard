@@ -48,7 +48,19 @@ export default function LicensesPage() {
   const [timeAdjustDays, setTimeAdjustDays] = useState(0);
   const [timeAdjustMode, setTimeAdjustMode] = useState<"add" | "remove">("add");
 
-  useEffect(() => { fetchData(); }, []);
+  const [currentUser, setCurrentUser] = useState("admin");
+  const [userRole, setUserRole] = useState<string | null>(null);
+
+  useEffect(() => { 
+    const role = localStorage.getItem("role");
+    if (role !== "admin" && role !== "reseller") {
+       window.location.href = "/store";
+       return;
+    }
+    setUserRole(role);
+    setCurrentUser(localStorage.getItem("username") || "admin");
+    fetchData(); 
+  }, []);
 
   const fetchData = async () => {
     try {
@@ -151,9 +163,11 @@ export default function LicensesPage() {
             <h1 className="text-4xl font-black text-white tracking-tighter uppercase italic leading-none">Generated Keys</h1>
           </div>
           <div className="flex gap-3">
-            <button onClick={() => setShowTimeModal(true)} className="flex items-center gap-2 px-6 py-4 bg-amber-600/10 border border-amber-500/20 text-amber-500 font-black rounded-2xl hover:bg-amber-600/20 transition-all uppercase tracking-widest text-[9px]">
-              <Clock className="w-4 h-4" /> Adjust Time
-            </button>
+            {userRole === "admin" && (
+              <button onClick={() => setShowTimeModal(true)} className="flex items-center gap-2 px-6 py-4 bg-amber-600/10 border border-amber-500/20 text-amber-500 font-black rounded-2xl hover:bg-amber-600/20 transition-all uppercase tracking-widest text-[9px]">
+                <Clock className="w-4 h-4" /> Adjust Time
+              </button>
+            )}
             <button onClick={() => { setGeneratedKeys([]); setShowGenModal(true); }} className="flex items-center gap-2 px-6 py-4 bg-primary text-white font-black rounded-2xl hover:bg-primary/90 transition-all shadow-[0_20px_40px_-10px_rgba(139,92,246,0.3)] uppercase tracking-widest text-[9px]">
               <Plus className="w-4 h-4" /> Generate Keys
             </button>
@@ -214,33 +228,35 @@ export default function LicensesPage() {
 
         {/* Bulk Action Buttons */}
         {/* Maintenance Tools (Collapsible) */}
-        <div className="bg-zinc-950/20 border border-zinc-900/50 rounded-2xl p-6">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <RefreshCcw className="w-4 h-4 text-zinc-600" />
-              <h3 className="text-[10px] font-black text-zinc-600 uppercase tracking-widest">Maintenance Control Unit</h3>
+        {userRole === "admin" && (
+          <div className="bg-zinc-950/20 border border-zinc-900/50 rounded-2xl p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <RefreshCcw className="w-4 h-4 text-zinc-600" />
+                <h3 className="text-[10px] font-black text-zinc-600 uppercase tracking-widest">Maintenance Control Unit</h3>
+              </div>
+              <span className="text-[8px] font-bold text-zinc-800 uppercase tracking-widest tracking-[0.2em]">Authorized Personnel Only</span>
             </div>
-            <span className="text-[8px] font-bold text-zinc-800 uppercase tracking-widest tracking-[0.2em]">Authorized Personnel Only</span>
+            <div className="flex flex-wrap gap-3">
+              <button onClick={handleExportKeys} className="flex items-center gap-2 px-6 py-3 bg-zinc-900 border border-zinc-800 text-zinc-400 rounded-xl text-[9px] font-black uppercase tracking-widest hover:text-white transition-all group">
+                <Download className="w-4 h-4 group-hover:text-emerald-500 transition-colors" /> Export Ledger
+              </button>
+              <button className="flex items-center gap-2 px-6 py-3 bg-zinc-900 border border-zinc-800 text-zinc-400 rounded-xl text-[9px] font-black uppercase tracking-widest hover:text-white transition-all group opacity-50 cursor-not-allowed">
+                <Upload className="w-4 h-4 group-hover:text-purple-500 transition-colors" /> Import Protocol
+              </button>
+              <div className="h-8 w-[1px] bg-zinc-900 mx-2" />
+              <button className="flex items-center gap-2 px-6 py-3 bg-zinc-900 border border-zinc-800 text-zinc-400 rounded-xl text-[9px] font-black uppercase tracking-widest hover:text-red-500 hover:border-red-500/30 transition-all group">
+                <RotateCcw className="w-4 h-4" /> Global Reset
+              </button>
+              <button className="flex items-center gap-2 px-6 py-3 bg-zinc-900 border border-zinc-800 text-zinc-400 rounded-xl text-[9px] font-black uppercase tracking-widest hover:text-amber-500 hover:border-amber-500/30 transition-all group">
+                <Ban className="w-4 h-4" /> Toggle All Bans
+              </button>
+              <button className="flex items-center gap-2 px-6 py-3 bg-red-500/5 border border-red-500/10 text-red-500/50 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-red-500/10 hover:text-red-500 transition-all ml-auto">
+                <Trash2 className="w-4 h-4" /> Purge Licensed Data
+              </button>
+            </div>
           </div>
-          <div className="flex flex-wrap gap-3">
-            <button onClick={handleExportKeys} className="flex items-center gap-2 px-6 py-3 bg-zinc-900 border border-zinc-800 text-zinc-400 rounded-xl text-[9px] font-black uppercase tracking-widest hover:text-white transition-all group">
-              <Download className="w-4 h-4 group-hover:text-emerald-500 transition-colors" /> Export Ledger
-            </button>
-            <button className="flex items-center gap-2 px-6 py-3 bg-zinc-900 border border-zinc-800 text-zinc-400 rounded-xl text-[9px] font-black uppercase tracking-widest hover:text-white transition-all group opacity-50 cursor-not-allowed">
-              <Upload className="w-4 h-4 group-hover:text-purple-500 transition-colors" /> Import Protocol
-            </button>
-            <div className="h-8 w-[1px] bg-zinc-900 mx-2" />
-            <button className="flex items-center gap-2 px-6 py-3 bg-zinc-900 border border-zinc-800 text-zinc-400 rounded-xl text-[9px] font-black uppercase tracking-widest hover:text-red-500 hover:border-red-500/30 transition-all group">
-              <RotateCcw className="w-4 h-4" /> Global Reset
-            </button>
-            <button className="flex items-center gap-2 px-6 py-3 bg-zinc-900 border border-zinc-800 text-zinc-400 rounded-xl text-[9px] font-black uppercase tracking-widest hover:text-amber-500 hover:border-amber-500/30 transition-all group">
-              <Ban className="w-4 h-4" /> Toggle All Bans
-            </button>
-            <button className="flex items-center gap-2 px-6 py-3 bg-red-500/5 border border-red-500/10 text-red-500/50 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-red-500/10 hover:text-red-500 transition-all ml-auto">
-              <Trash2 className="w-4 h-4" /> Purge Licensed Data
-            </button>
-          </div>
-        </div>
+        )}
 
         {/* License Table */}
         <div className="bg-zinc-950/50 border border-zinc-900 rounded-2xl overflow-hidden">

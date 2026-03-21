@@ -14,6 +14,7 @@ interface Notification {
 
 export function Header() {
   const [isAdmin, setIsAdmin] = useState(false);
+  const [userRole, setUserRole] = useState<string | null>(null);
   const [username, setUsername] = useState("Admin");
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
@@ -22,10 +23,12 @@ export function Header() {
   const profileRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    setIsAdmin(localStorage.getItem("role") === "admin");
+    const role = localStorage.getItem("role");
+    setIsAdmin(role === "admin");
+    setUserRole(role);
     setUsername(localStorage.getItem("username") || "Member");
     
-    if (localStorage.getItem("role") === "admin") {
+    if (role === "admin" || role === "reseller") {
       const fetchNotifs = async () => {
         try {
           const res = await fetch(getApiUrl("/api/licenses/admin/logs"), {
@@ -129,7 +132,9 @@ export function Header() {
             </div>
             <div className="text-left hidden md:block">
               <p className="text-xs font-black text-white uppercase italic tracking-tighter leading-none mb-1">{username}</p>
-              <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest leading-none">{isAdmin ? "Main Dev" : "Node Member"}</p>
+              <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest leading-none">
+                {userRole === "admin" ? "Master Dev" : userRole === "reseller" ? "Neural Reseller" : "Node Member"}
+              </p>
             </div>
             <ChevronDown className={cn("w-4 h-4 text-zinc-700 transition-transform", showProfile ? "rotate-180" : "group-hover:text-zinc-500")} />
           </button>
@@ -141,42 +146,62 @@ export function Header() {
                      <Shield className="w-10 h-10 text-indigo-500" />
                   </div>
                   <h3 className="text-xl font-black text-white uppercase italic tracking-tighter">{username}</h3>
-                  <p className="text-[10px] font-black text-zinc-600 uppercase tracking-widest">{isAdmin ? "Administrator" : "Network Member"}</p>
+                  <p className="text-[10px] font-black text-zinc-600 uppercase tracking-widest">
+                    {userRole === "admin" ? "Master Administrator" : userRole === "reseller" ? "Authorized Reseller" : "Standard Member"}
+                  </p>
                </div>
                
-               <div className="space-y-2">
-                   {isAdmin && (
-                     <>
-                       <button 
-                         onClick={() => window.location.href = "/application"}
-                         className="w-full p-4 bg-zinc-950 border border-zinc-900 rounded-2xl flex items-center gap-4 hover:border-indigo-500/30 transition-all group"
-                       >
-                          <Settings className="w-4 h-4 text-zinc-600 group-hover:text-indigo-500" />
-                          <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Global Config</span>
-                       </button>
-                       <button 
-                         onClick={() => window.location.href = "/dashboard"}
-                         className="w-full p-4 bg-zinc-950 border border-zinc-900 rounded-2xl flex items-center gap-4 hover:border-indigo-500/30 transition-all group"
-                       >
-                          <Zap className="w-4 h-4 text-zinc-600 group-hover:text-indigo-500" />
-                          <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Matrix Status</span>
-                       </button>
-                     </>
-                   )}
-                   <button 
-                     onClick={() => window.location.href = "/inventory"}
-                     className="w-full p-4 bg-zinc-950 border border-zinc-900 rounded-2xl flex items-center gap-4 hover:border-indigo-500/30 transition-all group"
-                   >
-                      <Package className="w-4 h-4 text-zinc-600 group-hover:text-indigo-500" />
-                      <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Intelligence Vault</span>
-                   </button>
-                   <button 
-                     onClick={() => window.location.href = "/store"}
-                     className="w-full p-4 bg-zinc-950 border border-zinc-900 rounded-2xl flex items-center gap-4 hover:border-indigo-500/30 transition-all group"
-                   >
-                      <Zap className="w-4 h-4 text-zinc-600 group-hover:text-indigo-500" />
-                      <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Marketplace</span>
-                   </button>
+                <div className="space-y-2">
+                    {userRole === "admin" && (
+                      <>
+                        <button 
+                          onClick={() => window.location.href = "/application"}
+                          className="w-full p-4 bg-zinc-950 border border-zinc-900 rounded-2xl flex items-center gap-4 hover:border-indigo-500/30 transition-all group"
+                        >
+                           <Settings className="w-4 h-4 text-zinc-600 group-hover:text-indigo-500" />
+                           <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Global Config</span>
+                        </button>
+                        <button 
+                          onClick={() => window.location.href = "/dashboard"}
+                          className="w-full p-4 bg-zinc-950 border border-zinc-900 rounded-2xl flex items-center gap-4 hover:border-indigo-500/30 transition-all group"
+                        >
+                           <Zap className="w-4 h-4 text-zinc-600 group-hover:text-indigo-500" />
+                           <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Matrix Status</span>
+                        </button>
+                      </>
+                    )}
+                    {userRole === "reseller" && (
+                      <>
+                        <button 
+                          onClick={() => window.location.href = "/dashboard"}
+                          className="w-full p-4 bg-zinc-950 border border-zinc-900 rounded-2xl flex items-center gap-4 hover:border-indigo-500/30 transition-all group"
+                        >
+                           <Zap className="w-4 h-4 text-zinc-600 group-hover:text-indigo-500" />
+                           <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Command Center</span>
+                        </button>
+                        <button 
+                          onClick={() => window.location.href = "/licenses"}
+                          className="w-full p-4 bg-zinc-950 border border-zinc-900 rounded-2xl flex items-center gap-4 hover:border-indigo-500/30 transition-all group"
+                        >
+                           <Shield className="w-4 h-4 text-zinc-600 group-hover:text-indigo-500" />
+                           <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">My Licenses</span>
+                        </button>
+                      </>
+                    )}
+                    <button 
+                      onClick={() => window.location.href = "/inventory"}
+                      className="w-full p-4 bg-zinc-950 border border-zinc-900 rounded-2xl flex items-center gap-4 hover:border-indigo-500/30 transition-all group"
+                    >
+                       <Package className="w-4 h-4 text-zinc-600 group-hover:text-indigo-500" />
+                       <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Intelligence Vault</span>
+                    </button>
+                    <button 
+                      onClick={() => window.location.href = "/store"}
+                      className="w-full p-4 bg-zinc-950 border border-zinc-900 rounded-2xl flex items-center gap-4 hover:border-indigo-500/30 transition-all group"
+                    >
+                       <Zap className="w-4 h-4 text-zinc-600 group-hover:text-indigo-500" />
+                       <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Marketplace</span>
+                    </button>
                   <div className="pt-4 border-t border-zinc-900">
                      <button 
                        onClick={() => {

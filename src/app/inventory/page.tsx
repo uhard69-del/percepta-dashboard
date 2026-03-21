@@ -15,7 +15,8 @@ import {
   History,
   Info,
   Key as KeyIcon,
-  ShoppingBag
+  ShoppingBag,
+  Users
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getApiUrl } from "@/lib/api";
@@ -36,10 +37,14 @@ export default function InventoryPage() {
   const [licenses, setLicenses] = useState<License[]>([]);
   const [loading, setLoading] = useState(true);
   const [username, setUsername] = useState("Member");
+  const [userRole, setUserRole] = useState<string | null>(null);
+  const [userCredits, setUserCredits] = useState("0.00");
   const [activeTab, setActiveTab] = useState<"ACTIVE" | "HISTORY">("ACTIVE");
 
   useEffect(() => {
     setUsername(localStorage.getItem("username") || "Member");
+    setUserRole(localStorage.getItem("role"));
+    setUserCredits(localStorage.getItem("credits") || "0.00");
     fetchMyLicenses();
   }, []);
 
@@ -79,18 +84,32 @@ export default function InventoryPage() {
              </span>
           </div>
 
-          <div className="flex items-center gap-6">
+          <div className="hidden md:flex items-center gap-10">
+             <button onClick={() => window.location.href = "/store"} className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 hover:text-white transition-colors">Marketplace</button>
+             <button onClick={() => window.location.href = "/inventory"} className="text-[10px] font-black uppercase tracking-[0.2em] text-white transition-colors border-b-2 border-indigo-500 pb-1 italic">Intelligence Vault</button>
+             <button onClick={() => alert("Network Status: STABLE")} className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 hover:text-white transition-colors">Network Status</button>
+          </div>
+
+          <div className="flex items-center gap-4">
+             {(userRole === "admin" || userRole === "reseller") && (
+               <div className="px-4 py-2 bg-emerald-500/5 border border-emerald-500/10 rounded-xl flex flex-col items-center">
+                  <span className="text-[7px] font-black text-emerald-500 uppercase tracking-widest">Available Credits</span>
+                  <span className="text-[11px] font-black text-white italic">${userCredits}</span>
+               </div>
+             )}
              <div className="flex flex-col items-end">
-                <span className="text-[8px] font-black text-zinc-600 uppercase tracking-widest leading-none mb-1">Authenticated Identity</span>
+                <span className="text-[8px] font-black text-zinc-600 uppercase tracking-widest leading-none mb-1">
+                    {userRole === "reseller" ? "Neural Reseller" : userRole === "admin" ? "Master Admin" : "Authenticated Identity"}
+                </span>
                 <span className="text-[11px] font-black text-white uppercase italic tracking-tighter">{username}</span>
              </div>
              <div className="h-10 w-[1px] bg-zinc-900 mx-2" />
              <Link href="/store" className="px-6 py-3 bg-zinc-900 border border-zinc-800 rounded-xl text-[10px] font-black uppercase tracking-widest text-white hover:border-indigo-500/30 transition-all">Marketplace</Link>
              <button 
                 onClick={() => { localStorage.clear(); window.location.href = "/login"; }}
-                className="px-6 py-3 bg-red-500/10 border border-red-500/20 rounded-xl text-[10px] font-black uppercase tracking-widest text-red-500 hover:bg-red-500/20 transition-all"
+                className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-500 hover:bg-red-500/20 transition-all"
              >
-                Terminate
+                <Users className="w-4 h-4" />
              </button>
           </div>
         </div>

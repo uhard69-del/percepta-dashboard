@@ -27,14 +27,18 @@ export default function DashboardPage() {
   const [newProjectName, setNewProjectName] = useState("");
   const [webhookUrl, setWebhookUrl] = useState("");
   const [currentUser, setCurrentUser] = useState("admin");
+  const [userRole, setUserRole] = useState<string | null>(null);
+  const [userCredits, setUserCredits] = useState("0.00");
 
   useEffect(() => {
     const role = localStorage.getItem("role");
-    if (role !== "admin") {
+    if (role !== "admin" && role !== "reseller") {
        window.location.href = "/store";
        return;
     }
+    setUserRole(role);
     setCurrentUser(localStorage.getItem("username") || "admin");
+    setUserCredits(localStorage.getItem("credits") || "0.00");
     
     const fetchData = async () => {
       try {
@@ -56,7 +60,7 @@ export default function DashboardPage() {
             active: licenses.filter((l: any) => l.status === "active").length,
             banned: licenses.filter((l: any) => l.status === "banned").length
           });
-          setLogs(logsData.slice(0, 10));
+          setLogs(logsData);
 
           // Growth matrix (last 7 days)
           const days: Record<string, number> = {};
@@ -259,33 +263,35 @@ export default function DashboardPage() {
         </div>
 
         {/* Integration & Quick Actions Area */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-10">
-            <div className="bg-zinc-950/20 border border-zinc-900 rounded-[2.5rem] p-8 flex items-center justify-between group hover:border-indigo-500/30 transition-all">
-                <div className="flex items-center gap-6">
-                    <div className="p-5 bg-indigo-500/10 border border-indigo-500/20 rounded-3xl text-indigo-500">
-                        <Webhook className="w-8 h-8" />
-                    </div>
-                    <div>
-                        <h3 className="text-lg font-black text-white uppercase italic tracking-tighter">Nexus Webhook</h3>
-                        <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest">Global Security Notification Relay</p>
-                    </div>
-                </div>
-                <button onClick={() => setShowWebhook(true)} className="px-8 py-4 bg-zinc-900 border border-zinc-800 text-[10px] font-black text-white uppercase tracking-widest rounded-2xl hover:bg-zinc-800 transition-all">Configure</button>
-            </div>
+        {userRole === "admin" && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-10">
+              <div className="bg-zinc-950/20 border border-zinc-900 rounded-[2.5rem] p-8 flex items-center justify-between group hover:border-indigo-500/30 transition-all">
+                  <div className="flex items-center gap-6">
+                      <div className="p-5 bg-indigo-500/10 border border-indigo-500/20 rounded-3xl text-indigo-500">
+                          <Webhook className="w-8 h-8" />
+                      </div>
+                      <div>
+                          <h3 className="text-lg font-black text-white uppercase italic tracking-tighter">Nexus Webhook</h3>
+                          <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest">Global Security Notification Relay</p>
+                      </div>
+                  </div>
+                  <button onClick={() => setShowWebhook(true)} className="px-8 py-4 bg-zinc-900 border border-zinc-800 text-[10px] font-black text-white uppercase tracking-widest rounded-2xl hover:bg-zinc-800 transition-all">Configure</button>
+              </div>
 
-            <div className="bg-zinc-950/20 border border-zinc-900 rounded-[2.5rem] p-8 flex items-center justify-between group hover:border-emerald-500/30 transition-all">
-                <div className="flex items-center gap-6">
-                    <div className="p-5 bg-emerald-500/10 border border-emerald-500/20 rounded-3xl text-emerald-500">
-                        <Plus className="w-8 h-8" />
-                    </div>
-                    <div>
-                        <h3 className="text-lg font-black text-white uppercase italic tracking-tighter">Initialize Protocol</h3>
-                        <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest">Register a new neural project unit</p>
-                    </div>
-                </div>
-                <button onClick={() => setShowCreateProject(true)} className="px-8 py-4 bg-zinc-900 border border-zinc-800 text-[10px] font-black text-white uppercase tracking-widest rounded-2xl hover:bg-zinc-800 transition-all">Create Unit</button>
-            </div>
-        </div>
+              <div className="bg-zinc-950/20 border border-zinc-900 rounded-[2.5rem] p-8 flex items-center justify-between group hover:border-emerald-500/30 transition-all">
+                  <div className="flex items-center gap-6">
+                      <div className="p-5 bg-emerald-500/10 border border-emerald-500/20 rounded-3xl text-emerald-500">
+                          <Plus className="w-8 h-8" />
+                      </div>
+                      <div>
+                          <h3 className="text-lg font-black text-white uppercase italic tracking-tighter">Initialize Protocol</h3>
+                          <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest">Register a new neural project unit</p>
+                      </div>
+                  </div>
+                  <button onClick={() => setShowCreateProject(true)} className="px-8 py-4 bg-zinc-900 border border-zinc-800 text-[10px] font-black text-white uppercase tracking-widest rounded-2xl hover:bg-zinc-800 transition-all">Create Unit</button>
+              </div>
+          </div>
+        )}
       </div>
 
       {/* Quick Create Project Modal */}

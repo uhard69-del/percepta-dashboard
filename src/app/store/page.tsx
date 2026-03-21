@@ -33,14 +33,24 @@ export default function StorePage() {
   const [activeCategory, setActiveCategory] = useState("All");
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [userRole, setUserRole] = useState<string | null>(null);
   const [username, setUsername] = useState("Member");
 
   const categories = ["All", "Aimbot", "ESP", "Misc", "Bundles"];
 
+  const [showCheckout, setShowCheckout] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [procuring, setProcuring] = useState(false);
+  const [userCredits, setUserCredits] = useState("0.00");
+
   useEffect(() => {
-    setIsLoggedIn(!!localStorage.getItem("token"));
-    setIsAdmin(localStorage.getItem("role") === "admin");
+    const token = localStorage.getItem("token");
+    setIsLoggedIn(!!token);
+    const role = localStorage.getItem("role");
+    setIsAdmin(role === "admin");
+    setUserRole(role);
     setUsername(localStorage.getItem("username") || "Member");
+    setUserCredits(localStorage.getItem("credits") || "0.00");
 
     const fetchProducts = async () => {
       try {
@@ -63,6 +73,33 @@ export default function StorePage() {
     window.location.reload();
   };
 
+  const handleProcure = async () => {
+    if (!selectedProduct) return;
+    setProcuring(true);
+    try {
+      const res = await fetch(getApiUrl(`/api/licenses/claim/${selectedProduct.id}`), {
+        method: "POST",
+        headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        alert(`SUCCESS: Protocol ${selectedProduct.name} has been synchronized with your Vault.\nNeural Tax Applied: $${selectedProduct.price}\n\nYour Key: ${data.key || "Available in Vault"}`);
+        if (data.new_balance) {
+            setUserCredits(data.new_balance);
+            localStorage.setItem("credits", data.new_balance);
+        }
+        setShowCheckout(false);
+      } else {
+        const err = await res.json();
+        alert(err.detail || "Frequency Intercepted. Procurement Failed.");
+      }
+    } catch (err) {
+      alert("Network link unstable.");
+    } finally {
+      setProcuring(false);
+    }
+  };
+
   const filteredProducts = products.filter(p => {
     const matchesSearch = p.name.toLowerCase().includes(search.toLowerCase()) || 
                           p.description?.toLowerCase().includes(search.toLowerCase());
@@ -76,31 +113,45 @@ export default function StorePage() {
       <nav className="h-24 border-b border-zinc-900/50 bg-black/40 backdrop-blur-xl sticky top-0 z-50">
         <div className="max-w-[1400px] mx-auto h-full px-8 flex items-center justify-between">
           <div className="flex items-center gap-3">
-             <div className="p-1 rounded-2xl bg-zinc-950 border border-zinc-900 shadow-2xl flex items-center justify-center">
+             <Link href="/store" className="p-1 rounded-2xl bg-zinc-950 border border-zinc-900 shadow-2xl flex items-center justify-center hover:border-indigo-500/30 transition-all">
                 <img src="/logo.png" className="w-8 h-8 object-contain drop-shadow-[0_0_10px_rgba(99,102,241,0.5)]" alt="PerceptaAI Logo" />
-             </div>
+             </Link>
              <span className="text-xl font-black tracking-tighter uppercase italic">
                 Percepta<span className="text-indigo-500 italic">AI</span>
              </span>
           </div>
 
           <div className="hidden md:flex items-center gap-10">
-             {["Solutions", "Marketplace", "Documentation", "Status"].map(item => (
-                <button key={item} className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 hover:text-white transition-colors">{item}</button>
-             ))}
+             <button onClick={() => window.location.href = "/store"} className="text-[10px] font-black uppercase tracking-[0.2em] text-white transition-colors border-b-2 border-indigo-500 pb-1">Marketplace</button>
+             <button onClick={() => alert("Documentation Hub coming soon.")} className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 hover:text-white transition-colors">Documentation</button>
+             <button onClick={() => alert("Network Status: STABLE (All Nodes Active)")} className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 hover:text-white transition-colors">Network Status</button>
           </div>
 
           <div className="flex items-center gap-4">
              {isLoggedIn ? (
                <>
-                 <div className="flex flex-col items-end mr-4">
-                    <span className="text-[8px] font-black text-zinc-600 uppercase tracking-widest leading-none mb-1">Authenticated</span>
+                 <Link href="/inventory" className="flex items-center gap-2 px-6 py-3 bg-indigo-600/10 border border-indigo-500/20 rounded-xl text-[10px] font-black uppercase tracking-widest text-indigo-500 hover:bg-indigo-600 hover:text-white transition-all shadow-lg shadow-indigo-500/5">
+                    <Package className="w-4 h-4" /> Intelligence Vault
+                 </Link>
+                 {(userRole === "admin" || userRole === "reseller") && (
+                   <div className="px-4 py-2 bg-emerald-500/5 border border-emerald-500/10 rounded-xl flex flex-col items-center">
+                      <span className="text-[7px] font-black text-emerald-500 uppercase tracking-widest">Available Credits</span>
+                      <span className="text-[11px] font-black text-white italic">${userCredits}</span>
+                   </div>
+                 )}
+                 <div className="h-10 w-[1px] bg-zinc-900 mx-2" />
+                 <div className="flex flex-col items-end">
+                    <span className="text-[8px] font-black text-zinc-600 uppercase tracking-widest leading-none mb-1">
+                        {userRole === "reseller" ? "Neural Reseller" : userRole === "admin" ? "Master Admin" : "Authenticated"}
+                    </span>
                     <span className="text-[10px] font-black text-white uppercase italic tracking-tighter">{username}</span>
                  </div>
                  {isAdmin ? (
-                   <Link href="/dashboard" className="px-6 py-3 bg-zinc-900 border border-zinc-800 rounded-xl text-[10px] font-black uppercase tracking-widest text-white hover:border-indigo-500/30 transition-all">Control Panel</Link>
+                   <Link href="/dashboard" className="px-6 py-3 bg-zinc-900 border border-zinc-800 rounded-xl text-[10px] font-black uppercase tracking-widest text-white hover:border-indigo-500/30 transition-all">Admin Control</Link>
                  ) : (
-                   <button onClick={handleLogout} className="px-6 py-3 bg-red-500/10 border border-red-500/20 rounded-xl text-[10px] font-black uppercase tracking-widest text-red-500 hover:bg-red-500/20 transition-all">Terminate</button>
+                   <button onClick={handleLogout} className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-500 hover:bg-red-500/20 transition-all">
+                      <Users className="w-4 h-4" />
+                   </button>
                  )}
                </>
              ) : (
@@ -218,27 +269,13 @@ export default function StorePage() {
                         </div>
 
                         <button 
-                            onClick={async () => {
+                            onClick={() => {
                                 if (!isLoggedIn) {
                                   window.location.href = `/register?product=${product.id}`;
                                   return;
                                 }
-                                
-                                try {
-                                  const res = await fetch(getApiUrl(`/api/licenses/claim/${product.id}`), {
-                                    method: "POST",
-                                    headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` }
-                                  });
-                                  if (res.ok) {
-                                    const data = await res.json();
-                                    alert(`SUCCESS: Protocol ${product.name} has been initialized.\nYour Key: ${data.key || "Check Inventory"}`);
-                                  } else {
-                                    const err = await res.json();
-                                    alert(err.detail || "Frequency Intercepted. Claim Failed.");
-                                  }
-                                } catch (err) {
-                                  alert("Network link unstable.");
-                                }
+                                setSelectedProduct(product);
+                                setShowCheckout(true);
                             }}
                             className="w-full flex items-center justify-center gap-3 py-4 bg-zinc-900 border border-zinc-800 rounded-2xl text-[10px] font-black text-white uppercase tracking-widest hover:bg-indigo-600 hover:border-indigo-500 transition-all duration-300 shadow-xl"
                         >
@@ -268,6 +305,63 @@ export default function StorePage() {
         </div>
         <span className="text-[8px] font-black text-zinc-700 uppercase tracking-[0.5em] italic">Percepta Global Security Network © 2026</span>
       </div>
+      {/* Checkout Modal */}
+      {showCheckout && selectedProduct && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/95 backdrop-blur-2xl p-6">
+          <div className="bg-[#0A0A0C] border border-zinc-900 w-full max-w-lg rounded-[3rem] p-12 shadow-2xl relative overflow-hidden">
+            <div className="absolute top-0 right-0 p-12 opacity-[0.03] pointer-events-none"><ShoppingCart className="w-48 h-48 text-indigo-500" /></div>
+            
+            <button onClick={() => setShowCheckout(false)} className="absolute top-8 right-8 text-zinc-600 hover:text-white transition-colors">
+                <ChevronRight className="w-8 h-8 rotate-90" />
+            </button>
+
+            <div className="mb-10">
+              <span className="text-[10px] font-black text-indigo-500 uppercase tracking-[0.3em]">Protocol Procurement</span>
+              <h2 className="text-3xl font-black text-white uppercase italic tracking-tighter">Confirm Acquisition</h2>
+            </div>
+
+            <div className="p-6 bg-zinc-900/40 border border-zinc-900 rounded-2xl mb-10 space-y-4">
+                <div className="flex justify-between items-center border-b border-zinc-900 pb-4">
+                    <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Selected Unit</span>
+                    <span className="text-[11px] font-black text-white uppercase italic">{selectedProduct.name}</span>
+                </div>
+                <div className="flex justify-between items-center pt-2">
+                    <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Neural Tax / Cost</span>
+                    <span className="text-xl font-black text-white italic">${selectedProduct.price}</span>
+                </div>
+            </div>
+
+            <div className="space-y-4">
+                { (userRole === "admin" || userRole === "reseller") ? (
+                  <>
+                    <button 
+                      onClick={handleProcure}
+                      disabled={procuring}
+                      className="w-full py-5 bg-indigo-600 hover:bg-indigo-500 text-white text-[11px] font-black uppercase tracking-widest rounded-2xl transition-all shadow-2xl shadow-indigo-500/20 disabled:opacity-50"
+                    >
+                      {procuring ? "Synchronizing Matrix..." : "Confirm & Download Protocol"}
+                    </button>
+                    <p className="text-[8px] font-bold text-zinc-600 text-center uppercase tracking-widest">
+                        Neural Reseller Priority: This protocol will be deducted from your available credit balance.
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <button 
+                      onClick={() => alert("Redirecting to External Secure Marketplace...")}
+                      className="w-full py-5 bg-zinc-100 hover:bg-white text-black text-[11px] font-black uppercase tracking-widest rounded-2xl transition-all shadow-2xl shadow-white/5"
+                    >
+                      Purchase via External Marketplace
+                    </button>
+                    <p className="text-[8px] font-bold text-zinc-600 text-center uppercase tracking-widest">
+                        Consumer Notice: Direct protocol initialization is restricted to license providers. Please secure your key via the external node.
+                    </p>
+                  </>
+                )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
