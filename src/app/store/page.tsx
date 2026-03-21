@@ -83,7 +83,7 @@ export default function StorePage() {
       });
       if (res.ok) {
         const data = await res.json();
-        alert(`SUCCESS: Protocol ${selectedProduct.name} has been synchronized with your Vault.\nNeural Tax Applied: ${userRole === 'reseller' ? selectedProduct.price + ' Credits' : '$' + selectedProduct.price}\n\nYour Key: ${data.key || "Available in Vault"}`);
+        alert(`SUCCESS: Protocol ${selectedProduct.name} has been synchronized with your Vault.\nNeural Tax Applied: ${userRole === 'reseller' ? Math.round(Number(selectedProduct.price) / 5) + ' Credits' : '$' + selectedProduct.price}\n\nYour Key: ${data.key || "Available in Vault"}`);
         if (data.new_balance) {
             setUserCredits(data.new_balance);
             localStorage.setItem("credits", data.new_balance);
@@ -242,7 +242,7 @@ export default function StorePage() {
                             </div>
                             <div className="text-right">
                                 <span className="block text-[8px] font-black text-indigo-500 uppercase tracking-[0.3em] mb-1">{userRole === 'reseller' ? 'Neural Tax' : 'Price Point'}</span>
-                                <span className="text-2xl font-black text-white italic">{userRole === 'reseller' ? `${product.price} CR` : `$${product.price}`}</span>
+                                <span className="text-2xl font-black text-white italic">{userRole === 'reseller' ? `${Math.round(Number(product.price) / 5)} CR` : `$${product.price}`}</span>
                             </div>
                         </div>
 
@@ -332,7 +332,7 @@ export default function StorePage() {
                 </div>
                 <div className="flex justify-between items-center pt-2">
                     <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Neural Tax / Cost</span>
-                    <span className="text-xl font-black text-white italic">${selectedProduct.price}</span>
+                    <span className="text-xl font-black text-white italic">{userRole === 'reseller' ? `${Math.round(Number(selectedProduct.price) / 5)} CR` : `$${selectedProduct.price}`}</span>
                 </div>
             </div>
 
