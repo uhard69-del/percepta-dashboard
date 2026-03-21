@@ -124,17 +124,12 @@ export default function DashboardPage() {
             <p className="text-zinc-500 text-xs font-bold uppercase tracking-[0.2em]">Here&apos;s your overview for today</p>
           </div>
           <div className="flex gap-3">
-            <Link href="/store" target="_blank" className="flex items-center gap-2 px-5 py-3 bg-zinc-950 border border-zinc-900 text-zinc-500 font-black rounded-2xl hover:text-white transition-all uppercase tracking-widest text-[9px]">
-              <Package className="w-4 h-4" /> Store
+            <Link href="/store" target="_blank" className="flex items-center gap-2 px-5 py-3 bg-zinc-900 border border-zinc-800 text-zinc-500 font-black rounded-2xl hover:text-white transition-all uppercase tracking-widest text-[9px]">
+              <Package className="w-4 h-4" /> Storefront
             </Link>
-            <Link href="/register" target="_blank" className="flex items-center gap-2 px-5 py-3 bg-zinc-950 border border-zinc-900 text-zinc-500 font-black rounded-2xl hover:text-white transition-all uppercase tracking-widest text-[9px]">
-              <Users className="w-4 h-4" /> Register
-            </Link>
-            <button onClick={() => setShowWebhook(true)} className="flex items-center gap-2 px-5 py-3 bg-zinc-950 border border-zinc-900 text-zinc-500 font-black rounded-2xl hover:text-white transition-all uppercase tracking-widest text-[9px]">
-              <Webhook className="w-4 h-4" /> Set Webhook
-            </button>
-            <button onClick={() => setShowCreateProject(true)} className="flex items-center gap-2 px-5 py-3 bg-primary text-white font-black rounded-2xl hover:bg-primary/90 transition-all shadow-[0_20px_40px_-10px_rgba(139,92,246,0.3)] uppercase tracking-widest text-[9px]">
-              <Plus className="w-4 h-4" /> New Project
+            <div className="h-12 w-[1px] bg-zinc-900 mx-2" />
+            <button className="p-4 bg-zinc-900 border border-zinc-800 rounded-2xl text-zinc-600 hover:text-white transition-all">
+                <Activity className="w-5 h-5" />
             </button>
           </div>
         </div>
@@ -261,6 +256,35 @@ export default function DashboardPage() {
               )}
             </div>
           </div>
+        </div>
+
+        {/* Integration & Quick Actions Area */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-10">
+            <div className="bg-zinc-950/20 border border-zinc-900 rounded-[2.5rem] p-8 flex items-center justify-between group hover:border-indigo-500/30 transition-all">
+                <div className="flex items-center gap-6">
+                    <div className="p-5 bg-indigo-500/10 border border-indigo-500/20 rounded-3xl text-indigo-500">
+                        <Webhook className="w-8 h-8" />
+                    </div>
+                    <div>
+                        <h3 className="text-lg font-black text-white uppercase italic tracking-tighter">Nexus Webhook</h3>
+                        <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest">Global Security Notification Relay</p>
+                    </div>
+                </div>
+                <button onClick={() => setShowWebhook(true)} className="px-8 py-4 bg-zinc-900 border border-zinc-800 text-[10px] font-black text-white uppercase tracking-widest rounded-2xl hover:bg-zinc-800 transition-all">Configure</button>
+            </div>
+
+            <div className="bg-zinc-950/20 border border-zinc-900 rounded-[2.5rem] p-8 flex items-center justify-between group hover:border-emerald-500/30 transition-all">
+                <div className="flex items-center gap-6">
+                    <div className="p-5 bg-emerald-500/10 border border-emerald-500/20 rounded-3xl text-emerald-500">
+                        <Plus className="w-8 h-8" />
+                    </div>
+                    <div>
+                        <h3 className="text-lg font-black text-white uppercase italic tracking-tighter">Initialize Protocol</h3>
+                        <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest">Register a new neural project unit</p>
+                    </div>
+                </div>
+                <button onClick={() => setShowCreateProject(true)} className="px-8 py-4 bg-zinc-900 border border-zinc-800 text-[10px] font-black text-white uppercase tracking-widest rounded-2xl hover:bg-zinc-800 transition-all">Create Unit</button>
+            </div>
         </div>
       </div>
 

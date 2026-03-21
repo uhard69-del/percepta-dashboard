@@ -169,7 +169,6 @@ export default function CustomersPage() {
                   <tr className="bg-zinc-900/40 border-b border-zinc-900">
                     <th className="px-8 py-6 text-[9px] font-black text-zinc-500 uppercase tracking-widest">Operative</th>
                     <th className="px-8 py-6 text-[9px] font-black text-zinc-500 uppercase tracking-widest">Access State</th>
-                    <th className="px-8 py-6 text-[9px] font-black text-zinc-500 uppercase tracking-widest">Credits</th>
                     <th className="px-8 py-6 text-[9px] font-black text-zinc-500 uppercase tracking-widest">Protocols</th>
                     <th className="px-8 py-6 text-[9px] font-black text-zinc-500 uppercase tracking-widest">Audit Logs</th>
                     <th className="px-8 py-6 text-[9px] font-black text-zinc-500 uppercase tracking-widest text-right">Moderations</th>
@@ -194,7 +193,6 @@ export default function CustomersPage() {
                             {c.is_banned ? "Severed" : "Linked"}
                         </span>
                       </td>
-                      <td className="px-8 py-6"><span className="text-[10px] font-black text-white">{c.credits} CC</span></td>
                       <td className="px-8 py-6 text-zinc-500 font-bold text-[10px]">{c.total_licenses} Active</td>
                       <td className="px-8 py-6 text-zinc-500 font-bold text-[10px]">{c.total_logs} Events</td>
                       <td className="px-8 py-6">
