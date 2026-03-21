@@ -12,8 +12,7 @@ import {
   CheckCircle2,
   TrendingUp,
   Shield,
-  ShoppingBag,
-  MoreVertical
+  ShoppingBag
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getApiUrl } from "@/lib/api";

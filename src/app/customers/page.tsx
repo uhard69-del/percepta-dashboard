@@ -211,7 +211,12 @@ export default function CustomersPage() {
                                     </button>
                                 </>
                             )}
-                            <button onClick={() => alert(`OPERATIVE DETAILS:\nID: ${c.id}\nDiscord: ${c.discord_id || "None"}\nRole: ${c.role.toUpperCase()}`)} className="p-3 bg-zinc-900 border border-zinc-800 rounded-xl hover:text-white transition-all shadow-inner"><MoreHorizontal className="w-3.5 h-3.5" /></button>
+                            <button 
+                                onClick={() => alert(`OPERATIVE DATA:\nUser ID: ${c.id}\nDiscord: ${c.discord_id || "None"}\nRole: ${c.role.toUpperCase()}\nStatus: ${c.is_banned ? 'BANNED' : 'ACTIVE'}`)} 
+                                className="px-6 py-2 bg-zinc-900 border border-zinc-800 rounded-xl hover:text-white transition-all shadow-inner text-[10px] font-black uppercase tracking-widest"
+                            >
+                                Info
+                            </button>
                         </div>
                       </td>
                     </tr>

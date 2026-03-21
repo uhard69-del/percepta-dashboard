@@ -57,6 +57,7 @@ export default function ProductsPage() {
   const [newProductOnSale, setNewProductOnSale] = useState(false);
   const [newProductSalePrice, setNewProductSalePrice] = useState("");
   const [newProductDownloadUrl, setNewProductDownloadUrl] = useState("");
+  const [newProductIsEnabled, setNewProductIsEnabled] = useState(true);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
 
   const fetchProducts = async () => {
@@ -91,6 +92,7 @@ export default function ProductsPage() {
     setNewProductOnSale(false);
     setNewProductSalePrice("");
     setNewProductDownloadUrl("");
+    setNewProductIsEnabled(true);
     setError(null);
     setSuccess(false);
     setIsModalOpen(true);
@@ -107,6 +109,7 @@ export default function ProductsPage() {
     setNewProductAuto(product.auto_generate);
     setNewProductOnSale(product.is_on_sale);
     setNewProductSalePrice(product.sale_price || "");
+    setNewProductIsEnabled(product.is_enabled);
     
     // Parse metadata for download_url
     try {
@@ -147,7 +150,7 @@ export default function ProductsPage() {
       is_on_sale: newProductOnSale,
       sale_price: newProductOnSale ? newProductSalePrice : null,
       extra_metadata: JSON.stringify(metadataObj),
-      is_enabled: true
+      is_enabled: newProductIsEnabled
     };
 
     try {
@@ -266,11 +269,8 @@ export default function ProductsPage() {
                 <div className="h-32 bg-gradient-to-br from-indigo-900/20 to-zinc-900 relative p-8">
                     <div className="flex items-center justify-between">
                         <span className="px-2 py-1 bg-emerald-500/10 border border-emerald-500/20 rounded-md text-[8px] font-black text-emerald-500 uppercase tracking-widest">
-                            Live Preview
+                            {product.is_enabled ? "Live Store" : "Maintenance Mode"}
                         </span>
-                        <div className="p-2 bg-zinc-950/50 rounded-xl">
-                            <MoreVertical className="w-4 h-4 text-zinc-600" />
-                        </div>
                     </div>
                     <div className="absolute -bottom-6 left-8">
                         <div className="w-12 h-12 bg-zinc-900 border border-zinc-800 rounded-2xl flex items-center justify-center shadow-lg group-hover:border-indigo-500/30 transition-all transform group-hover:scale-110">
@@ -480,6 +480,26 @@ export default function ProductsPage() {
                         <input type="text" value={newProductDownloadUrl} onChange={(e) => setNewProductDownloadUrl(e.target.value)} className="w-full bg-zinc-950 border border-zinc-900 rounded-2xl px-14 py-4 text-xs font-bold text-white tracking-wider focus:border-indigo-500/50 outline-none transition-all" placeholder="https://external-host.com/binary.exe" />
                     </div>
                     <p className="text-[7px] font-bold text-zinc-600 uppercase tracking-widest ml-2 italic">* Dashboard will proxy this stream to keep the origin secure</p>
+                </div>
+
+                <div className="flex items-center justify-between p-4 bg-zinc-950 border border-zinc-900 rounded-2xl">
+                    <div className="flex flex-col">
+                        <span className="text-[9px] font-black text-white uppercase tracking-widest">Product Visible</span>
+                        <span className="text-[7px] font-bold text-zinc-500 uppercase tracking-widest">Toggle maintenance mode</span>
+                    </div>
+                    <button 
+                        type="button"
+                        onClick={() => setNewProductIsEnabled(!newProductIsEnabled)}
+                        className={cn(
+                            "w-12 h-6 rounded-full transition-all relative",
+                            newProductIsEnabled ? "bg-emerald-600" : "bg-zinc-800"
+                        )}
+                    >
+                        <div className={cn(
+                            "absolute top-1 w-4 h-4 bg-white rounded-full transition-all",
+                            newProductIsEnabled ? "right-1" : "left-1"
+                        )} />
+                    </button>
                 </div>
 
                 <div className="flex items-center justify-between p-4 bg-zinc-950 border border-zinc-900 rounded-2xl">

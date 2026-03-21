@@ -167,7 +167,7 @@ export default function StorePage() {
                  <Link href="/login" className="px-6 py-3 text-[10px] font-black uppercase tracking-widest text-zinc-500 hover:text-white transition-all">Sign In</Link>
                  <Link href="/register" className="px-8 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-xl shadow-indigo-500/10 active:scale-95 group">
                     <span className="flex items-center gap-2">
-                        Start Protection <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                        Register Account <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                     </span>
                  </Link>
                </>
