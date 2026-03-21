@@ -324,7 +324,17 @@ export default function DashboardPage() {
                 <input value={webhookUrl} onChange={(e) => setWebhookUrl(e.target.value)} placeholder="https://discord.com/api/webhooks/..."
                   className="w-full bg-zinc-900/50 border border-zinc-800 rounded-xl px-4 py-3 text-xs font-bold text-white placeholder:text-zinc-700 outline-none" />
               </div>
-              <button onClick={() => { alert("Webhook URL saved!"); setShowWebhook(false); }} className="w-full py-4 bg-primary text-white text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-primary/90 transition-all">Save Webhook</button>
+              <button onClick={async () => {
+                  try {
+                      const res = await fetch(getApiUrl("/api/settings"), {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${localStorage.getItem("token")}` },
+                          body: JSON.stringify({ key: "discord_webhook_url", value: webhookUrl })
+                      });
+                      if (res.ok) { alert("Webhook URL saved!"); setShowWebhook(false); }
+                      else alert("Failed to save webhook.");
+                  } catch (e) { alert("Network Error"); }
+              }} className="w-full py-4 bg-primary text-white text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-primary/90 transition-all">Save Webhook</button>
             </div>
           </div>
         </div>

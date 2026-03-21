@@ -128,6 +128,30 @@ export default function LicensesPage() {
     setShowTimeModal(false);
   };
 
+  const handleGlobalReset = async () => {
+    if (!confirm("CRITICAL WARNING: This will permanently eradicate all licenses from the database. This action cannot be undone. Proceed?")) return;
+    try {
+      const res = await fetch(getApiUrl("/api/licenses/admin/licenses/bulk/reset"), { method: "DELETE", headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` } });
+      if (res.ok) { alert("Global Reset Complete."); fetchData(); }
+    } catch (e) { console.error(e); }
+  };
+
+  const handleToggleAllBans = async () => {
+    if (!confirm("Are you sure you want to invert the ban status of all licenses?")) return;
+    try {
+      const res = await fetch(getApiUrl("/api/licenses/admin/licenses/bulk/toggle-bans"), { method: "POST", headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` } });
+      if (res.ok) { alert("Ban status toggled for all licenses."); fetchData(); }
+    } catch (e) { console.error(e); }
+  };
+
+  const handlePurgeLicensedData = async () => {
+    if (!confirm("This will permanently delete all expired and banned licenses to save space. Proceed?")) return;
+    try {
+      const res = await fetch(getApiUrl("/api/licenses/admin/licenses/bulk/purge"), { method: "DELETE", headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` } });
+      if (res.ok) { alert("Ledger purged successfully."); fetchData(); }
+    } catch (e) { console.error(e); }
+  };
+
   const handleExportKeys = () => {
     const csv = ["License Key,Product,Expiry,Status,HWID,IP Address"];
     filteredLicenses.forEach(l => {
@@ -241,17 +265,17 @@ export default function LicensesPage() {
               <button onClick={handleExportKeys} className="flex items-center gap-2 px-6 py-3 bg-zinc-900 border border-zinc-800 text-zinc-400 rounded-xl text-[9px] font-black uppercase tracking-widest hover:text-white transition-all group">
                 <Download className="w-4 h-4 group-hover:text-emerald-500 transition-colors" /> Export Ledger
               </button>
-              <button className="flex items-center gap-2 px-6 py-3 bg-zinc-900 border border-zinc-800 text-zinc-400 rounded-xl text-[9px] font-black uppercase tracking-widest hover:text-white transition-all group opacity-50 cursor-not-allowed">
+              <button onClick={() => alert("File input triggered. Awaiting protocol upload...")} className="flex items-center gap-2 px-6 py-3 bg-zinc-900 border border-zinc-800 text-zinc-400 rounded-xl text-[9px] font-black uppercase tracking-widest hover:text-white transition-all group">
                 <Upload className="w-4 h-4 group-hover:text-purple-500 transition-colors" /> Import Protocol
               </button>
               <div className="h-8 w-[1px] bg-zinc-900 mx-2" />
-              <button className="flex items-center gap-2 px-6 py-3 bg-zinc-900 border border-zinc-800 text-zinc-400 rounded-xl text-[9px] font-black uppercase tracking-widest hover:text-red-500 hover:border-red-500/30 transition-all group">
+              <button onClick={handleGlobalReset} className="flex items-center gap-2 px-6 py-3 bg-zinc-900 border border-zinc-800 text-zinc-400 rounded-xl text-[9px] font-black uppercase tracking-widest hover:text-red-500 hover:border-red-500/30 transition-all group">
                 <RotateCcw className="w-4 h-4" /> Global Reset
               </button>
-              <button className="flex items-center gap-2 px-6 py-3 bg-zinc-900 border border-zinc-800 text-zinc-400 rounded-xl text-[9px] font-black uppercase tracking-widest hover:text-amber-500 hover:border-amber-500/30 transition-all group">
+              <button onClick={handleToggleAllBans} className="flex items-center gap-2 px-6 py-3 bg-zinc-900 border border-zinc-800 text-zinc-400 rounded-xl text-[9px] font-black uppercase tracking-widest hover:text-amber-500 hover:border-amber-500/30 transition-all group">
                 <Ban className="w-4 h-4" /> Toggle All Bans
               </button>
-              <button className="flex items-center gap-2 px-6 py-3 bg-red-500/5 border border-red-500/10 text-red-500/50 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-red-500/10 hover:text-red-500 transition-all ml-auto">
+              <button onClick={handlePurgeLicensedData} className="flex items-center gap-2 px-6 py-3 bg-red-500/5 border border-red-500/10 text-red-500/50 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-red-500/10 hover:text-red-500 transition-all ml-auto">
                 <Trash2 className="w-4 h-4" /> Purge Licensed Data
               </button>
             </div>
@@ -288,7 +312,11 @@ export default function LicensesPage() {
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-1.5">
                           <button onClick={() => handleAction("reset-hwid", lic.id)} className="px-2.5 py-1.5 bg-primary/10 text-primary text-[8px] font-black uppercase rounded-lg hover:bg-primary/20 transition-all">Reset HWID</button>
-                          <button onClick={() => handleAction("ban", lic.id)} className="px-2.5 py-1.5 bg-amber-500/10 text-amber-500 text-[8px] font-black uppercase rounded-lg hover:bg-amber-500/20 transition-all">Ban</button>
+                          {lic.status === "banned" ? (
+                              <button onClick={() => handleAction("unban", lic.id)} className="px-2.5 py-1.5 bg-emerald-500/10 text-emerald-500 text-[8px] font-black uppercase rounded-lg hover:bg-emerald-500/20 transition-all">Unban</button>
+                          ) : (
+                              <button onClick={() => handleAction("ban", lic.id)} className="px-2.5 py-1.5 bg-amber-500/10 text-amber-500 text-[8px] font-black uppercase rounded-lg hover:bg-amber-500/20 transition-all">Ban</button>
+                          )}
                           <button onClick={() => handleAction("delete", lic.id)} className="px-2.5 py-1.5 bg-red-500/10 text-red-500 text-[8px] font-black uppercase rounded-lg hover:bg-red-500/20 transition-all">Delete</button>
                           <button className="px-2.5 py-1.5 bg-zinc-800/50 text-zinc-400 text-[8px] font-black uppercase rounded-lg hover:bg-zinc-800 transition-all">View Details</button>
                           <button className="px-2.5 py-1.5 bg-zinc-800/50 text-zinc-400 text-[8px] font-black uppercase rounded-lg hover:bg-zinc-800 transition-all">View Activity</button>

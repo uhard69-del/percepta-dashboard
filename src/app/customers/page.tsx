@@ -29,13 +29,17 @@ export default function CustomersPage() {
   const [filterBy, setFilterBy] = useState("Name");
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showSystemModal, setShowSystemModal] = useState(false);
+  const [userRole, setUserRole] = useState<string | null>(null);
   
   // Create Form
   const [newName, setNewName] = useState("");
   const [newEmail, setNewEmail] = useState("");
   const [newDiscord, setNewDiscord] = useState("");
 
-  useEffect(() => { fetchCustomers(); }, []);
+  useEffect(() => { 
+      fetchCustomers(); 
+      setUserRole(localStorage.getItem("role"));
+  }, []);
 
   const fetchCustomers = async () => {
     try {
@@ -125,17 +129,19 @@ export default function CustomersPage() {
             </div>
             <h1 className="text-4xl font-black text-white tracking-tighter uppercase italic leading-none underline decoration-primary/20 decoration-4">Customers</h1>
           </div>
-          <div className="flex items-center gap-4">
-            <button 
-              onClick={() => setShowSystemModal(true)} 
-              className="flex items-center gap-2 px-6 py-4 bg-zinc-900 border border-zinc-800 text-zinc-400 font-black rounded-2xl hover:bg-zinc-800 transition-all uppercase tracking-widest text-[9px]"
-            >
-              <ShieldAlert className="w-4 h-4" /> System Console
-            </button>
-            <button onClick={() => setShowCreateModal(true)} className="flex items-center gap-2 px-6 py-4 bg-primary text-white font-black rounded-2xl hover:bg-primary/90 transition-all shadow-[0_20px_40px_-10px_rgba(139,92,246,0.3)] uppercase tracking-widest text-[9px]">
-              <Plus className="w-4 h-4" /> Create operative
-            </button>
-          </div>
+          {userRole === "admin" && (
+              <div className="flex items-center gap-4">
+                <button 
+                  onClick={() => setShowSystemModal(true)} 
+                  className="flex items-center gap-2 px-6 py-4 bg-zinc-900 border border-zinc-800 text-zinc-400 font-black rounded-2xl hover:bg-zinc-800 transition-all uppercase tracking-widest text-[9px]"
+                >
+                  <ShieldAlert className="w-4 h-4" /> System Console
+                </button>
+                <button onClick={() => setShowCreateModal(true)} className="flex items-center gap-2 px-6 py-4 bg-primary text-white font-black rounded-2xl hover:bg-primary/90 transition-all shadow-[0_20px_40px_-10px_rgba(139,92,246,0.3)] uppercase tracking-widest text-[9px]">
+                  <Plus className="w-4 h-4" /> Create operative
+                </button>
+              </div>
+          )}
         </div>
 
         {/* Filters */}
@@ -197,11 +203,15 @@ export default function CustomersPage() {
                       <td className="px-8 py-6 text-zinc-500 font-bold text-[10px]">{c.total_logs} Events</td>
                       <td className="px-8 py-6">
                         <div className="flex items-center justify-end gap-2 opacity-30 group-hover:opacity-100 transition-opacity">
-                            <button onClick={() => handleResetPassword(c.id)} title="Reset Neural Key" className="p-3 bg-zinc-900 border border-zinc-800 rounded-xl hover:text-primary transition-all shadow-inner"><Key className="w-3.5 h-3.5" /></button>
-                            <button onClick={() => handleBan(c.id)} title={c.is_banned ? "Restore Access" : "Sever Access"} className={cn("p-3 bg-zinc-900 border border-zinc-800 rounded-xl transition-all shadow-inner", c.is_banned ? "text-emerald-500" : "hover:text-red-500")}>
-                                {c.is_banned ? <UserCheck className="w-3.5 h-3.5" /> : <Ban className="w-3.5 h-3.5" />}
-                            </button>
-                            <button className="p-3 bg-zinc-900 border border-zinc-800 rounded-xl hover:text-white transition-all shadow-inner"><MoreHorizontal className="w-3.5 h-3.5" /></button>
+                            {userRole === "admin" && (
+                                <>
+                                    <button onClick={() => handleResetPassword(c.id)} title="Reset Neural Key" className="p-3 bg-zinc-900 border border-zinc-800 rounded-xl hover:text-primary transition-all shadow-inner"><Key className="w-3.5 h-3.5" /></button>
+                                    <button onClick={() => handleBan(c.id)} title={c.is_banned ? "Restore Access" : "Sever Access"} className={cn("p-3 bg-zinc-900 border border-zinc-800 rounded-xl transition-all shadow-inner", c.is_banned ? "text-emerald-500" : "hover:text-red-500")}>
+                                        {c.is_banned ? <UserCheck className="w-3.5 h-3.5" /> : <Ban className="w-3.5 h-3.5" />}
+                                    </button>
+                                </>
+                            )}
+                            <button onClick={() => alert(`OPERATIVE DETAILS:\nID: ${c.id}\nDiscord: ${c.discord_id || "None"}\nRole: ${c.role.toUpperCase()}`)} className="p-3 bg-zinc-900 border border-zinc-800 rounded-xl hover:text-white transition-all shadow-inner"><MoreHorizontal className="w-3.5 h-3.5" /></button>
                         </div>
                       </td>
                     </tr>

@@ -24,6 +24,7 @@ import { getApiUrl } from "@/lib/api";
 interface License {
   id: string;
   key_hash: string;
+  key_string?: string;
   product_id: string;
   status: string;
   expires_at: string;
@@ -184,9 +185,9 @@ export default function InventoryPage() {
                                <h3 className="text-2xl font-black text-white uppercase italic tracking-tighter line-clamp-1">
                                    {lic.product?.name || "Target Protocol"}
                                </h3>
-                               <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest italic">Encrypted Master Key:</p>
+                               <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest italic">{lic.key_string ? "Master Key:" : "Encrypted Master Key:"}</p>
                                <div className="p-4 bg-black border border-zinc-900 rounded-2xl font-mono text-[11px] text-white break-all select-all flex items-center justify-between group/key transition-all hover:border-indigo-500/20 shadow-inner">
-                                   <span>{lic.key_hash.toUpperCase()}</span>
+                                   <span>{lic.key_string || lic.key_hash.toUpperCase()}</span>
                                    <ExternalLink className="w-3 h-3 opacity-30 group-hover/key:opacity-100 transition-opacity text-indigo-500" />
                                </div>
                            </div>

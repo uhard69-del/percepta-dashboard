@@ -83,7 +83,7 @@ export default function StorePage() {
       });
       if (res.ok) {
         const data = await res.json();
-        alert(`SUCCESS: Protocol ${selectedProduct.name} has been synchronized with your Vault.\nNeural Tax Applied: $${selectedProduct.price}\n\nYour Key: ${data.key || "Available in Vault"}`);
+        alert(`SUCCESS: Protocol ${selectedProduct.name} has been synchronized with your Vault.\nNeural Tax Applied: ${userRole === 'reseller' ? selectedProduct.price + ' Credits' : '$' + selectedProduct.price}\n\nYour Key: ${data.key || "Available in Vault"}`);
         if (data.new_balance) {
             setUserCredits(data.new_balance);
             localStorage.setItem("credits", data.new_balance);
@@ -123,8 +123,13 @@ export default function StorePage() {
 
           <div className="hidden md:flex items-center gap-10">
              <button onClick={() => window.location.href = "/store"} className="text-[10px] font-black uppercase tracking-[0.2em] text-white transition-colors border-b-2 border-indigo-500 pb-1">Marketplace</button>
-             <button onClick={() => alert("Documentation Hub coming soon.")} className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 hover:text-white transition-colors">Documentation</button>
-             <button onClick={() => alert("Network Status: STABLE (All Nodes Active)")} className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 hover:text-white transition-colors">Network Status</button>
+             <button onClick={() => window.open(getApiUrl("/docs"), "_blank")} className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 hover:text-white transition-colors">Documentation</button>
+             <button onClick={() => {
+                 const start = Date.now();
+                 fetch(getApiUrl("/")).then(() => {
+                     alert(`Network Status: STABLE\nLatency: ${Date.now() - start}ms\nAll Nodes Active`);
+                 }).catch(() => alert("Network OFFLINE. API Unreachable."));
+             }} className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 hover:text-white transition-colors">Network Status</button>
           </div>
 
           <div className="flex items-center gap-4">
@@ -236,8 +241,8 @@ export default function StorePage() {
                                 <Package className="w-6 h-6 text-indigo-500" />
                             </div>
                             <div className="text-right">
-                                <span className="block text-[8px] font-black text-indigo-500 uppercase tracking-[0.3em] mb-1">Price Point</span>
-                                <span className="text-2xl font-black text-white italic">${product.price}</span>
+                                <span className="block text-[8px] font-black text-indigo-500 uppercase tracking-[0.3em] mb-1">{userRole === 'reseller' ? 'Neural Tax' : 'Price Point'}</span>
+                                <span className="text-2xl font-black text-white italic">{userRole === 'reseller' ? `${product.price} CR` : `$${product.price}`}</span>
                             </div>
                         </div>
 
