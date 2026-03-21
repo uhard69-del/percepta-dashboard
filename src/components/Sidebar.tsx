@@ -1,7 +1,8 @@
 "use client";
 
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { 
   LayoutDashboard, 
@@ -31,17 +32,28 @@ const navigation = [
   { name: "Integrate", href: "/integrate", icon: Terminal },
 ];
 
-
-import { useRouter } from "next/navigation";
-
 export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
 
+  const [userRole, setUserRole] = useState<string | null>(null);
+
+  useEffect(() => {
+    setUserRole(localStorage.getItem("role"));
+  }, []);
+
   const handleLogout = () => {
-    // Clear any auth tokens if we had them
+    localStorage.clear();
     router.push("/login");
   };
+
+  const filteredNavigation = navigation.filter(item => {
+    if (userRole !== "admin") {
+      const adminOnly = ["/products", "/logs", "/application", "/settings", "/resellers", "/api-docs", "/integrate"];
+      if (adminOnly.includes(item.href)) return false;
+    }
+    return true;
+  });
 
   return (
     <div className="flex h-full w-72 flex-col bg-[#0A0A0C] border-r border-zinc-900/50">
@@ -57,7 +69,7 @@ export function Sidebar() {
       </div>
 
       <nav className="flex-1 space-y-2 px-6 py-4">
-        {navigation.map((item) => {
+        {filteredNavigation.map((item) => {
           const isActive = pathname === item.href;
           return (
             <Link

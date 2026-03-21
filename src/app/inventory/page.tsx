@@ -71,6 +71,36 @@ export default function InventoryPage() {
   const activeLicenses = licenses.filter(l => l.status === "active");
   const historyLicenses = licenses.filter(l => l.status !== "active");
 
+  const handleDownloadProtocol = async (licenseId: string, productName: string) => {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(getApiUrl(`/api/licenses/download/${licenseId}`), {
+        headers: { "Authorization": `Bearer ${token}` }
+      });
+      if (!res.ok) {
+        let errMsg = "Cannot locate executable protocol attached to this license.";
+        try {
+            const err = await res.json();
+            errMsg = err.detail || errMsg;
+        } catch {}
+        alert("SECURITY INTERCEPT: " + errMsg);
+        return;
+      }
+      
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${productName.replace(/\s+/g, '_')}.exe`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch(e) {
+      alert("Network transmission failure while compiling binary construct.");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#08080A] text-white selection:bg-indigo-500/30">
       {/* Header */}
@@ -186,9 +216,18 @@ export default function InventoryPage() {
                                    {lic.product?.name || "Target Protocol"}
                                </h3>
                                <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest italic">Protocol Key:</p>
-                               <div className="p-4 bg-black border border-zinc-900 rounded-2xl font-mono text-[11px] text-white break-all select-all flex items-center justify-between group/key transition-all hover:border-indigo-500/20 shadow-inner">
+                                <div className="p-4 bg-black border border-zinc-900 rounded-2xl font-mono text-[11px] text-white break-all select-all flex items-center justify-between group/key transition-all hover:border-indigo-500/20 shadow-inner">
                                    <span>{lic.key_string || "SYNCING..."}</span>
                                    <ExternalLink className="w-3 h-3 opacity-30 group-hover/key:opacity-100 transition-opacity text-indigo-500" />
+                               </div>
+                               <div className="pt-2">
+                                   <button 
+                                      onClick={() => handleDownloadProtocol(lic.id, lic.product?.name || "Protocol")}
+                                      className="w-full flex items-center justify-center gap-2 py-3 bg-zinc-900 border border-zinc-800 rounded-xl text-[9px] font-black text-white hover:text-indigo-400 hover:border-indigo-500/30 uppercase tracking-[0.2em] transition-all group/dl shadow-xl"
+                                   >
+                                      <Zap className="w-3 h-3 group-hover/dl:text-indigo-500 transition-colors" />
+                                      Download Secure Protocol
+                                   </button>
                                </div>
                            </div>
 

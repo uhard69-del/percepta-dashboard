@@ -128,6 +128,23 @@ export default function ProductsPage() {
     }
   };
 
+  const handleDeleteProduct = async (id: string, name: string) => {
+    if (!window.confirm(`DANGER: Are you sure you want to completely terminal protocol [${name}]? This action deletes the template and prevents future generations.`)) return;
+    try {
+      const res = await fetch(getApiUrl(`/api/products/admin/products/${id}`), {
+        method: "DELETE",
+        headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` }
+      });
+      if (res.ok) {
+        fetchProducts();
+      } else {
+        alert("Failed to terminate protocol. It may have active dependencies.");
+      }
+    } catch (err) {
+      console.error("Delete failed", err);
+    }
+  };
+
   return (
     <div className="flex-1 overflow-auto bg-[#08080A]">
       <Header />
@@ -239,8 +256,11 @@ export default function ProductsPage() {
                              >
                                 <RefreshCw className="w-4 h-4 group-hover/refill:rotate-180 transition-transform duration-500" />
                              </button>
-                             <button className="flex items-center gap-2 px-4 py-2 bg-zinc-900 border border-zinc-800 rounded-xl text-[9px] font-black text-zinc-500 hover:text-white uppercase italic tracking-widest transition-all">
-                                Edit <ChevronRight className="w-3 h-3" />
+                             <button 
+                                onClick={() => handleDeleteProduct(product.id, product.name)}
+                                className="flex items-center gap-2 px-4 py-2 bg-red-500/10 border border-red-500/20 rounded-xl text-[9px] font-black text-red-500 hover:bg-red-500 hover:text-white uppercase italic tracking-widest transition-all"
+                             >
+                                Terminate <Trash2 className="w-3 h-3" />
                              </button>
                          </div>
                     </div>
