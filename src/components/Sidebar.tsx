@@ -21,15 +21,15 @@ import {
 
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { name: "Generated Keys", href: "/licenses", icon: Key },
-  { name: "Product Hub", href: "/products", icon: Package },
-  { name: "Realtime", href: "/logs", icon: Activity },
+  { name: "Activation Keys", href: "/licenses", icon: Key },
+  { name: "Product Management", href: "/products", icon: Package },
+  { name: "Activity Logs", href: "/logs", icon: Activity },
   { name: "Customers", href: "/customers", icon: Users },
-  { name: "Reseller Panel", href: "/resellers", icon: UserPlus },
-  { name: "Application", href: "/application", icon: ShieldCheck },
+  { name: "Manage Resellers", href: "/resellers", icon: UserPlus },
+  { name: "System Config", href: "/application", icon: ShieldCheck },
   { name: "Settings", href: "/settings", icon: Settings },
-  { name: "API", href: "/api-docs", icon: Code },
-  { name: "Integrate", href: "/integrate", icon: Terminal },
+  { name: "Developer API", href: "/api-docs", icon: Code },
+  { name: "Integration Guide", href: "/integrate", icon: Terminal },
 ];
 
 export function Sidebar() {

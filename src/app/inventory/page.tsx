@@ -111,13 +111,13 @@ export default function InventoryPage() {
                 <img src="/logo.png" className="w-8 h-8 object-contain drop-shadow-[0_0_10px_rgba(99,102,241,0.5)]" alt="PerceptaAI Logo" />
              </Link>
              <span className="text-xl font-black tracking-tighter uppercase italic">
-                Secure<span className="text-indigo-500 italic">Vault</span>
+                My<span className="text-indigo-500 italic">Products</span>
              </span>
           </div>
 
           <div className="hidden md:flex items-center gap-10">
              <button onClick={() => window.location.href = "/store"} className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 hover:text-white transition-colors">Marketplace</button>
-             <button onClick={() => window.location.href = "/inventory"} className="text-[10px] font-black uppercase tracking-[0.2em] text-white transition-colors border-b-2 border-indigo-500 pb-1 italic">Intelligence Vault</button>
+             <button onClick={() => window.location.href = "/inventory"} className="text-[10px] font-black uppercase tracking-[0.2em] text-white transition-colors border-b-2 border-indigo-500 pb-1 italic">My Products</button>
              <button onClick={() => alert("Network Status: STABLE")} className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 hover:text-white transition-colors">Network Status</button>
           </div>
 
@@ -155,8 +155,8 @@ export default function InventoryPage() {
                 <span className="text-[8px] font-black text-emerald-500 uppercase tracking-[0.3em]">Encrypted Storage Active</span>
             </div>
             <h1 className="text-5xl font-black tracking-tighter uppercase italic leading-[0.9]">
-                Neural <br />
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-500 animate-gradient">Intelligence Hub</span>
+                Product <br />
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-500 animate-gradient">Vault</span>
             </h1>
          </div>
       </div>
@@ -171,7 +171,7 @@ export default function InventoryPage() {
                 activeTab === "ACTIVE" ? "bg-indigo-600 text-white shadow-lg shadow-indigo-500/20" : "text-zinc-600 hover:text-white"
               )}
             >
-              <Zap className="w-3 h-3" /> Active Protocol
+              <Zap className="w-3 h-3" /> Active Products
             </button>
             <button 
               onClick={() => setActiveTab("HISTORY")}
@@ -180,7 +180,7 @@ export default function InventoryPage() {
                 activeTab === "HISTORY" ? "bg-zinc-800 text-white" : "text-zinc-600 hover:text-white"
               )}
             >
-              <History className="w-3 h-3" /> Procurement History
+              <History className="w-3 h-3" /> Purchase History
             </button>
          </div>
       </div>
@@ -215,9 +215,9 @@ export default function InventoryPage() {
                                <h3 className="text-2xl font-black text-white uppercase italic tracking-tighter line-clamp-1">
                                    {lic.product?.name || "Target Protocol"}
                                </h3>
-                               <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest italic">Protocol Key:</p>
+                               <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest italic">Activation Key:</p>
                                 <div className="p-4 bg-black border border-zinc-900 rounded-2xl font-mono text-[11px] text-white break-all select-all flex items-center justify-between group/key transition-all hover:border-indigo-500/20 shadow-inner">
-                                   <span>{lic.key_string || "SYNCING..."}</span>
+                                   <span>{lic.key_string || "LOADING..."}</span>
                                    <ExternalLink className="w-3 h-3 opacity-30 group-hover/key:opacity-100 transition-opacity text-indigo-500" />
                                </div>
                                <div className="pt-2">
@@ -226,7 +226,7 @@ export default function InventoryPage() {
                                       className="w-full flex items-center justify-center gap-2 py-3 bg-zinc-900 border border-zinc-800 rounded-xl text-[9px] font-black text-white hover:text-indigo-400 hover:border-indigo-500/30 uppercase tracking-[0.2em] transition-all group/dl shadow-xl"
                                    >
                                       <Zap className="w-3 h-3 group-hover/dl:text-indigo-500 transition-colors" />
-                                      Download Secure Protocol
+                                      Download Product
                                    </button>
                                </div>
                            </div>
@@ -248,7 +248,7 @@ export default function InventoryPage() {
             ) : (
                <div className="py-32 text-center border-2 border-dashed border-zinc-900 rounded-[3rem]">
                    <Package className="w-16 h-16 text-zinc-900 mx-auto mb-6" />
-                   <p className="text-[10px] font-black text-zinc-700 uppercase tracking-[0.4em] italic mb-8">No active protocols detected in your neural bank</p>
+                   <p className="text-[10px] font-black text-zinc-700 uppercase tracking-[0.4em] italic mb-8">No products found in your account</p>
                    <Link href="/store" className="inline-flex items-center gap-3 px-10 py-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all shadow-xl shadow-indigo-500/20">
                        Visit Marketplace <ChevronRight className="w-4 h-4" />
                    </Link>
@@ -260,10 +260,10 @@ export default function InventoryPage() {
                     <table className="w-full text-left border-collapse">
                         <thead>
                             <tr className="bg-zinc-900/50 border-b border-zinc-900">
-                                <th className="px-8 py-5 text-[9px] font-black text-zinc-500 uppercase tracking-widest"> Procurement Date</th>
-                                <th className="px-8 py-5 text-[9px] font-black text-zinc-500 uppercase tracking-widest">Protocol Designation</th>
-                                <th className="px-8 py-5 text-[9px] font-black text-zinc-500 uppercase tracking-widest">Neural Link State</th>
-                                <th className="px-8 py-5 text-[9px] font-black text-zinc-500 uppercase tracking-widest">System Record</th>
+                                <th className="px-8 py-5 text-[9px] font-black text-zinc-500 uppercase tracking-widest"> Purchase Date</th>
+                                <th className="px-8 py-5 text-[9px] font-black text-zinc-500 uppercase tracking-widest">Product Name</th>
+                                <th className="px-8 py-5 text-[9px] font-black text-zinc-500 uppercase tracking-widest">Status</th>
+                                <th className="px-8 py-5 text-[9px] font-black text-zinc-500 uppercase tracking-widest">Record ID</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-zinc-900/50 font-bold">

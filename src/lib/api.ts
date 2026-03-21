@@ -3,7 +3,10 @@
  */
 export function getApiUrl(path: string): string {
     // 1. Get the base URL from env or fallback
-    let base = process.env.NEXT_PUBLIC_API_URL || "https://percepta-backend.onrender.com";
+    let base = process.env.NEXT_PUBLIC_API_URL || 
+               (typeof window !== "undefined" && window.location.hostname === "localhost" 
+                ? "http://localhost:8000" 
+                : "https://percepta-backend.onrender.com");
     
     // 2. Normalize: Remove a trailing /
     base = base.replace(/\/$/, "");

@@ -130,10 +130,10 @@ export default function ResellersPage() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-[40px] font-black text-white tracking-tighter uppercase italic leading-none mb-3">
-              Reseller Channels
+              Reseller Management
             </h1>
             <p className="text-zinc-500 text-xs font-bold uppercase tracking-[0.2em] opacity-60">
-              Manage external distribution nodes and storefront credits
+              Manage external resellers and storefront credits
             </p>
           </div>
           
@@ -186,17 +186,17 @@ export default function ResellersPage() {
           {loading ? (
              <div className="py-24 text-center">
                 <div className="w-12 h-12 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto mb-6" />
-                <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest">Querying merchant ledger...</p>
+                <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest">Loading resellers...</p>
              </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-zinc-900/30 border-b border-zinc-900">
-                    <th className="px-8 py-6 text-[9px] font-black text-zinc-500 uppercase tracking-[0.3em]">Merchant ID</th>
+                    <th className="px-8 py-6 text-[9px] font-black text-zinc-500 uppercase tracking-[0.3em]">Username</th>
                     <th className="px-8 py-6 text-[9px] font-black text-zinc-500 uppercase tracking-[0.3em]">Status</th>
                     <th className="px-8 py-6 text-[9px] font-black text-zinc-500 uppercase tracking-[0.3em]">Credit Balance</th>
-                    <th className="px-8 py-6 text-[9px] font-black text-zinc-500 uppercase tracking-[0.3em]">Commercial Role</th>
+                    <th className="px-8 py-6 text-[9px] font-black text-zinc-500 uppercase tracking-[0.3em]">Role</th>
                     <th className="px-8 py-6 text-[9px] font-black text-zinc-500 uppercase tracking-[0.3em]">Actions</th>
                   </tr>
                 </thead>
@@ -217,7 +217,7 @@ export default function ResellersPage() {
                       <td className="px-8 py-6">
                          <div className="flex items-center gap-3">
                             <span className="text-xl font-black text-white italic">{merchant.credits}</span>
-                            <span className="text-[9px] font-black text-zinc-700 uppercase tracking-widest">PTS</span>
+                            <span className="text-[9px] font-black text-zinc-700 uppercase tracking-widest">Credits</span>
                          </div>
                       </td>
                       <td className="px-8 py-6">
@@ -273,8 +273,8 @@ export default function ResellersPage() {
             </button>
 
             <div className="mb-10 text-center">
-              <h2 className="text-3xl font-black text-white uppercase italic tracking-tighter mb-2">Establish Merchant</h2>
-              <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-[0.3em]">Authorize external distribution node</p>
+              <h2 className="text-3xl font-black text-white uppercase italic tracking-tighter mb-2">Add New Reseller</h2>
+              <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-[0.3em]">Authorize a new reseller to sell products</p>
             </div>
 
             {success ? (
@@ -282,7 +282,7 @@ export default function ResellersPage() {
                  <div className="w-20 h-20 bg-emerald-500/10 border border-emerald-500/20 rounded-full flex items-center justify-center mx-auto mb-6 text-emerald-500">
                     <CheckCircle2 className="w-10 h-10" />
                  </div>
-                 <h3 className="text-xl font-black text-white uppercase italic tracking-widest">Merchant Authorized</h3>
+                 <h3 className="text-xl font-black text-white uppercase italic tracking-widest">Reseller Added</h3>
               </div>
             ) : (
               <form onSubmit={handleCreateReseller} className="space-y-6">
@@ -309,7 +309,7 @@ export default function ResellersPage() {
                   <input type="number" value={newCredits} onChange={(e) => setNewCredits(e.target.value)} className="w-full bg-zinc-950 border border-zinc-900 rounded-2xl px-6 py-4 text-xs font-bold text-white" required />
                 </div>
                 <button disabled={isCreating} className="w-full py-5 bg-indigo-600 text-white font-black rounded-2xl uppercase tracking-widest italic text-sm shadow-[0_20px_40px_-10px_rgba(79,70,229,0.3)] hover:bg-indigo-500 transition-all">
-                  {isCreating ? "Authorizing..." : "Link Merchant"}
+                  {isCreating ? "Adding..." : "Add Reseller"}
                 </button>
               </form>
             )}

@@ -65,7 +65,7 @@ export function Header() {
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-600 group-focus-within:text-primary transition-colors" />
           <input
             type="text"
-            placeholder={isAdmin ? "SEARCH CRYPTOGRAPHIC LEDGER..." : "SEARCH PROTOCOLS..."}
+            placeholder={isAdmin ? "SEARCH LOGS..." : "SEARCH PRODUCTS..."}
             className="w-full bg-zinc-900/30 border border-zinc-900 rounded-2xl py-3.5 pl-12 pr-4 text-[10px] font-black tracking-widest text-white placeholder:text-zinc-800 focus:outline-none focus:ring-1 focus:ring-primary/40 transition-all uppercase"
           />
         </div>
@@ -111,7 +111,7 @@ export function Header() {
                        <div className="py-10 text-center text-[10px] font-bold text-zinc-700 uppercase tracking-[0.3em]">No alerts in queue</div>
                     )}
                  </div>
-                 <button className="w-full mt-6 py-4 bg-zinc-950 border border-zinc-900 rounded-xl text-[9px] font-black text-zinc-500 uppercase tracking-widest hover:text-white hover:border-zinc-800 transition-all">Clear All Traces</button>
+                 <button className="w-full mt-6 py-4 bg-zinc-950 border border-zinc-900 rounded-xl text-[9px] font-black text-zinc-500 uppercase tracking-widest hover:text-white hover:border-zinc-800 transition-all">Clear Notifications</button>
               </div>
             )}
           </div>
@@ -133,7 +133,7 @@ export function Header() {
             <div className="text-left hidden md:block">
               <p className="text-xs font-black text-white uppercase italic tracking-tighter leading-none mb-1">{username}</p>
               <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest leading-none">
-                {userRole === "admin" ? "Master Dev" : userRole === "reseller" ? "Neural Reseller" : "Node Member"}
+                {userRole === "admin" ? "Admin" : userRole === "reseller" ? "Reseller" : "Member"}
               </p>
             </div>
             <ChevronDown className={cn("w-4 h-4 text-zinc-700 transition-transform", showProfile ? "rotate-180" : "group-hover:text-zinc-500")} />
@@ -147,7 +147,7 @@ export function Header() {
                   </div>
                   <h3 className="text-xl font-black text-white uppercase italic tracking-tighter">{username}</h3>
                   <p className="text-[10px] font-black text-zinc-600 uppercase tracking-widest">
-                    {userRole === "admin" ? "Master Administrator" : userRole === "reseller" ? "Authorized Reseller" : "Standard Member"}
+                    {userRole === "admin" ? "Administrator" : userRole === "reseller" ? "Authorized Reseller" : "Member"}
                   </p>
                </div>
                
@@ -159,14 +159,14 @@ export function Header() {
                           className="w-full p-4 bg-zinc-950 border border-zinc-900 rounded-2xl flex items-center gap-4 hover:border-indigo-500/30 transition-all group"
                         >
                            <Settings className="w-4 h-4 text-zinc-600 group-hover:text-indigo-500" />
-                           <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Global Config</span>
+                           <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Settings</span>
                         </button>
                         <button 
                           onClick={() => window.location.href = "/dashboard"}
                           className="w-full p-4 bg-zinc-950 border border-zinc-900 rounded-2xl flex items-center gap-4 hover:border-indigo-500/30 transition-all group"
                         >
                            <Zap className="w-4 h-4 text-zinc-600 group-hover:text-indigo-500" />
-                           <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Matrix Status</span>
+                           <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">System Status</span>
                         </button>
                       </>
                     )}
@@ -177,7 +177,7 @@ export function Header() {
                           className="w-full p-4 bg-zinc-950 border border-zinc-900 rounded-2xl flex items-center gap-4 hover:border-indigo-500/30 transition-all group"
                         >
                            <Zap className="w-4 h-4 text-zinc-600 group-hover:text-indigo-500" />
-                           <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Command Center</span>
+                           <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Admin Dashboard</span>
                         </button>
                         <button 
                           onClick={() => window.location.href = "/licenses"}
@@ -193,7 +193,7 @@ export function Header() {
                       className="w-full p-4 bg-zinc-950 border border-zinc-900 rounded-2xl flex items-center gap-4 hover:border-indigo-500/30 transition-all group"
                     >
                        <Package className="w-4 h-4 text-zinc-600 group-hover:text-indigo-500" />
-                       <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Intelligence Vault</span>
+                       <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">My Products</span>
                     </button>
                     <button 
                       onClick={() => window.location.href = "/store"}
@@ -211,7 +211,7 @@ export function Header() {
                        className="w-full p-4 bg-zinc-900/50 border border-zinc-900 rounded-2xl flex items-center gap-4 hover:bg-red-500/5 hover:border-red-500/30 transition-all group"
                      >
                         <LogOut className="w-4 h-4 text-zinc-600 group-hover:text-red-500" />
-                        <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest group-hover:text-red-500">Terminate Session</span>
+                        <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest group-hover:text-red-500">Log Out</span>
                      </button>
                   </div>
                </div>

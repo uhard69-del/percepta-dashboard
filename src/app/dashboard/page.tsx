@@ -42,53 +42,69 @@ export default function DashboardPage() {
     
     const fetchData = async () => {
       try {
-        const [prodRes, licRes, logRes] = await Promise.all([
-          fetch(getApiUrl("/api/products/admin/products"), { headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` } }),
-          fetch(getApiUrl("/api/licenses/admin/licenses"), { headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` } }),
-          fetch(getApiUrl("/api/licenses/admin/logs"), { headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` } })
+        const token = localStorage.getItem("token");
+        const headers = { "Authorization": `Bearer ${token}` };
+
+        // Individual fetches to prevent total failure if one endpoint is empty/error
+        const [prodRes, licRes, logRes] = await Promise.allSettled([
+          fetch(getApiUrl("/api/products/admin/products"), { headers }),
+          fetch(getApiUrl("/api/licenses/admin/licenses"), { headers }),
+          fetch(getApiUrl("/api/licenses/admin/logs"), { headers })
         ]);
 
-        if (prodRes.ok && licRes.ok && logRes.ok) {
-          const products = await prodRes.json();
-          const licenses = await licRes.json();
-          const logsData = await logRes.json();
-          
-          setStats({
-            users: new Set(licenses.map((l: any) => l.hwid).filter(Boolean)).size,
-            licenses: licenses.length,
-            products: products.length,
-            active: licenses.filter((l: any) => l.status === "active").length,
-            banned: licenses.filter((l: any) => l.status === "banned").length
-          });
-          setLogs(logsData);
+        let productCount = 0;
+        let licenseList: any[] = [];
+        let logList: any[] = [];
 
-          // Growth matrix (last 7 days)
-          const days: Record<string, number> = {};
-          const now = new Date();
-          for (let i = 6; i >= 0; i--) {
-            const d = new Date(now); d.setDate(d.getDate() - i);
-            const dateStr = d.toLocaleDateString('en-US', { day: '2-digit', month: 'short' });
-            days[dateStr] = 0;
-          }
-          licenses.forEach((l: any) => {
-            const dateStr = new Date(l.created_at).toLocaleDateString('en-US', { day: '2-digit', month: 'short' });
-            if (days[dateStr] !== undefined) days[dateStr]++;
-          });
-          setChartData(Object.entries(days).map(([name, value]) => ({ name, value: value as number })));
-
-          // Daily API requests (last 7 days from logs)
-          const apiDays: Record<string, number> = {};
-          for (let i = 6; i >= 0; i--) {
-            const d = new Date(now); d.setDate(d.getDate() - i);
-            const dateStr = d.toLocaleDateString('en-US', { weekday: 'short' });
-            apiDays[dateStr] = 0;
-          }
-          logsData.forEach((l: any) => {
-            const dateStr = new Date(l.timestamp).toLocaleDateString('en-US', { weekday: 'short' });
-            if (apiDays[dateStr] !== undefined) apiDays[dateStr]++;
-          });
-          setDailyApiData(Object.entries(apiDays).map(([name, requests]) => ({ name, requests: requests as number })));
+        if (prodRes.status === "fulfilled" && prodRes.value.ok) {
+           const products = await prodRes.value.json();
+           productCount = products.length;
         }
+
+        if (licRes.status === "fulfilled" && licRes.value.ok) {
+           licenseList = await licRes.value.json();
+        }
+
+        if (logRes.status === "fulfilled" && logRes.value.ok) {
+           logList = await logRes.value.json();
+        }
+        
+        setStats({
+          users: new Set(licenseList.map((l: any) => l.hwid).filter(Boolean)).size,
+          licenses: licenseList.length,
+          products: productCount,
+          active: licenseList.filter((l: any) => l.status === "active").length,
+          banned: licenseList.filter((l: any) => l.status === "banned").length
+        });
+        setLogs(logList);
+
+        // Growth Trends (last 7 days)
+        const days: Record<string, number> = {};
+        const now = new Date();
+        for (let i = 6; i >= 0; i--) {
+          const d = new Date(now); d.setDate(d.getDate() - i);
+          const dateStr = d.toLocaleDateString('en-US', { day: '2-digit', month: 'short' });
+          days[dateStr] = 0;
+        }
+        licenseList.forEach((l: any) => {
+          const dateStr = new Date(l.created_at).toLocaleDateString('en-US', { day: '2-digit', month: 'short' });
+          if (days[dateStr] !== undefined) days[dateStr]++;
+        });
+        setChartData(Object.entries(days).map(([name, value]) => ({ name, value: value as number })));
+
+        // System Activity (last 7 days from logs)
+        const apiDays: Record<string, number> = {};
+        for (let i = 6; i >= 0; i--) {
+          const d = new Date(now); d.setDate(d.getDate() - i);
+          const dateStr = d.toLocaleDateString('en-US', { weekday: 'short' });
+          apiDays[dateStr] = 0;
+        }
+        logList.forEach((l: any) => {
+          const dateStr = new Date(l.timestamp).toLocaleDateString('en-US', { weekday: 'short' });
+          if (apiDays[dateStr] !== undefined) apiDays[dateStr]++;
+        });
+        setDailyApiData(Object.entries(apiDays).map(([name, requests]) => ({ name, requests: requests as number })));
+        
       } catch (error) { console.error("Fetch failure:", error); }
       finally { setLoading(false); }
     };
@@ -189,7 +205,7 @@ export default function DashboardPage() {
               <div className="bg-zinc-950/50 border border-zinc-900 rounded-[2.5rem] p-8 shadow-2xl">
                 <div className="flex items-center gap-3 mb-6">
                   <TrendingUp className="w-5 h-5 text-primary" />
-                  <h2 className="text-sm font-black text-white uppercase tracking-widest">Growth Matrix</h2>
+                  <h2 className="text-sm font-black text-white uppercase tracking-widest">Growth Trends</h2>
                 </div>
                 <div className="h-[180px] w-full">
                   <ResponsiveContainer width="100%" height="100%">
@@ -210,8 +226,8 @@ export default function DashboardPage() {
 
               <div className="bg-zinc-950/50 border border-zinc-900 rounded-[2.5rem] p-8 shadow-2xl">
                 <div className="flex items-center gap-3 mb-6">
-                  <Activity className="w-5 h-5 text-blue-500" />
-                  <h2 className="text-sm font-black text-white uppercase tracking-widest">Daily API Requests</h2>
+                   <Activity className="w-5 h-5 text-blue-500" />
+                  <h2 className="text-sm font-black text-white uppercase tracking-widest">System Activity</h2>
                 </div>
                 <div className="h-[180px] w-full">
                   <ResponsiveContainer width="100%" height="100%">
@@ -271,8 +287,8 @@ export default function DashboardPage() {
                           <Webhook className="w-8 h-8" />
                       </div>
                       <div>
-                          <h3 className="text-lg font-black text-white uppercase italic tracking-tighter">Nexus Webhook</h3>
-                          <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest">Global Security Notification Relay</p>
+                          <h3 className="text-lg font-black text-white uppercase italic tracking-tighter">Discord Notifications</h3>
+                          <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest">System-wide update alerts</p>
                       </div>
                   </div>
                   <button onClick={() => setShowWebhook(true)} className="px-8 py-4 bg-zinc-900 border border-zinc-800 text-[10px] font-black text-white uppercase tracking-widest rounded-2xl hover:bg-zinc-800 transition-all">Configure</button>
@@ -284,11 +300,11 @@ export default function DashboardPage() {
                           <Plus className="w-8 h-8" />
                       </div>
                       <div>
-                          <h3 className="text-lg font-black text-white uppercase italic tracking-tighter">Initialize Protocol</h3>
-                          <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest">Register a new neural project unit</p>
+                          <h3 className="text-lg font-black text-white uppercase italic tracking-tighter">Add New Product</h3>
+                          <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest">Add a new product to your inventory</p>
                       </div>
                   </div>
-                  <button onClick={() => setShowCreateProject(true)} className="px-8 py-4 bg-zinc-900 border border-zinc-800 text-[10px] font-black text-white uppercase tracking-widest rounded-2xl hover:bg-zinc-800 transition-all">Create Unit</button>
+                  <button onClick={() => setShowCreateProject(true)} className="px-8 py-4 bg-zinc-900 border border-zinc-800 text-[10px] font-black text-white uppercase tracking-widest rounded-2xl hover:bg-zinc-800 transition-all">Create Product</button>
               </div>
           </div>
         )}

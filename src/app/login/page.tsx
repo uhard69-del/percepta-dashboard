@@ -49,10 +49,10 @@ export default function LoginPage() {
         else router.push("/store");
       } else {
         const data = await res.json();
-        setError(data.detail || "Authentication failed. Frequency check failed.");
+        setError(data.detail || "Invalid username or password.");
       }
     } catch (e) {
-      setError("Network frequency unstable. Retry uplink.");
+      setError("Unable to connect to the authentication server.");
     } finally {
       setLoading(false);
     }
@@ -68,8 +68,8 @@ export default function LoginPage() {
            <div className="inline-flex p-4 rounded-3xl bg-zinc-950 border border-zinc-900 shadow-2xl mb-4">
               <ShieldCheck className="w-10 h-10 text-indigo-500 drop-shadow-[0_0_15px_rgba(99,102,241,0.5)]" />
            </div>
-           <h1 className="text-4xl font-black text-white tracking-tighter uppercase italic leading-none">Access <span className="text-indigo-500">Uplink</span></h1>
-           <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-[0.3em] mt-2">Percepta Global Security Node</p>
+           <h1 className="text-4xl font-black text-white tracking-tighter uppercase italic leading-none">Account <span className="text-indigo-500">Login</span></h1>
+           <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-[0.3em] mt-2">Percepta Secure Portal</p>
         </div>
 
         <form onSubmit={handleLogin} className="bg-zinc-950/40 border border-zinc-900 rounded-[2.5rem] p-8 shadow-2xl space-y-6">
@@ -86,7 +86,7 @@ export default function LoginPage() {
               <input 
                 required
                 type="text" 
-                placeholder="NODE IDENTITY"
+                placeholder="USERNAME"
                 className="w-full bg-zinc-900/40 border border-zinc-900 rounded-2xl py-4 pl-12 pr-6 text-[11px] font-bold uppercase tracking-widest focus:outline-none focus:border-indigo-500/30 transition-all placeholder:text-zinc-700"
                 value={formData.username}
                 onChange={(e) => setFormData({ ...formData, username: e.target.value })}
@@ -98,7 +98,7 @@ export default function LoginPage() {
               <input 
                 required
                 type="password" 
-                placeholder="SECURITY KEY"
+                placeholder="PASSWORD"
                 className="w-full bg-zinc-900/40 border border-zinc-900 rounded-2xl py-4 pl-12 pr-6 text-[11px] font-bold uppercase tracking-widest focus:outline-none focus:border-indigo-500/30 transition-all placeholder:text-zinc-700"
                 value={formData.password}
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
@@ -112,14 +112,14 @@ export default function LoginPage() {
             className="w-full py-5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] transition-all shadow-xl shadow-indigo-500/20 active:scale-95 disabled:opacity-50 flex items-center justify-center gap-3 italic"
           >
             {loading ? <RefreshCw className="w-5 h-5 animate-spin" /> : <ShieldCheck className="w-5 h-5" />}
-            {loading ? "Establishing..." : "Establish Link"}
+            {loading ? "Authenticating..." : "Login to Dashboard"}
             {!loading && <ArrowRight className="w-4 h-4" />}
           </button>
         </form>
 
         <div className="text-center pt-4">
            <p className="text-[9px] font-bold text-zinc-700 uppercase tracking-widest">
-              No access credentials? <a href="/register" className="text-indigo-500 hover:underline">Sync New Identity</a>
+              Need an account? <a href="/register" className="text-indigo-500 hover:underline">Register Now</a>
            </p>
         </div>
       </div>

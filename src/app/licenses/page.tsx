@@ -129,7 +129,7 @@ export default function LicensesPage() {
   };
 
   const handleGlobalReset = async () => {
-    if (!confirm("CRITICAL WARNING: This will permanently eradicate all licenses from the database. This action cannot be undone. Proceed?")) return;
+    if (!confirm("CRITICAL WARNING: This will permanently delete all keys from the database. This action cannot be undone. Proceed?")) return;
     try {
       const res = await fetch(getApiUrl("/api/licenses/admin/licenses/bulk/reset"), { method: "DELETE", headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` } });
       if (res.ok) { alert("Global Reset Complete."); fetchData(); }
@@ -148,7 +148,7 @@ export default function LicensesPage() {
     if (!confirm("This will permanently delete all expired and banned licenses to save space. Proceed?")) return;
     try {
       const res = await fetch(getApiUrl("/api/licenses/admin/licenses/bulk/purge"), { method: "DELETE", headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` } });
-      if (res.ok) { alert("Ledger purged successfully."); fetchData(); }
+      if (res.ok) { alert("Database cleaned."); fetchData(); }
     } catch (e) { console.error(e); }
   };
 
@@ -182,18 +182,18 @@ export default function LicensesPage() {
           <div>
             <div className="flex items-center gap-2 mb-1">
               <Key className="w-4 h-4 text-primary" />
-              <span className="text-[10px] font-black text-primary uppercase tracking-[0.3em]">License Vault</span>
+              <span className="text-[10px] font-black text-primary uppercase tracking-[0.3em]">Key Management</span>
             </div>
-            <h1 className="text-4xl font-black text-white tracking-tighter uppercase italic leading-none">Generated Keys</h1>
+            <h1 className="text-4xl font-black text-white tracking-tighter uppercase italic leading-none">Activation Keys</h1>
           </div>
           <div className="flex gap-3">
             {userRole === "admin" && (
               <button onClick={() => setShowTimeModal(true)} className="flex items-center gap-2 px-6 py-4 bg-amber-600/10 border border-amber-500/20 text-amber-500 font-black rounded-2xl hover:bg-amber-600/20 transition-all uppercase tracking-widest text-[9px]">
-                <Clock className="w-4 h-4" /> Adjust Time
+                <Clock className="w-4 h-4" /> Extend Licenses
               </button>
             )}
             <button onClick={() => { setGeneratedKeys([]); setShowGenModal(true); }} className="flex items-center gap-2 px-6 py-4 bg-primary text-white font-black rounded-2xl hover:bg-primary/90 transition-all shadow-[0_20px_40px_-10px_rgba(139,92,246,0.3)] uppercase tracking-widest text-[9px]">
-              <Plus className="w-4 h-4" /> Generate Keys
+              <Plus className="w-4 h-4" /> Create Keys
             </button>
           </div>
         </div>
@@ -201,7 +201,7 @@ export default function LicensesPage() {
         {/* Stats */}
         <div className="grid grid-cols-3 gap-4">
           <div className="p-6 bg-zinc-950/50 border border-zinc-900 rounded-2xl">
-            <p className="text-[9px] font-bold text-zinc-600 uppercase tracking-widest mb-1">Total Licenses</p>
+            <p className="text-[9px] font-bold text-zinc-600 uppercase tracking-widest mb-1">Total Keys</p>
             <p className="text-3xl font-black text-white">{licenses.length}</p>
           </div>
           <div className="p-6 bg-zinc-950/50 border border-zinc-900 rounded-2xl">
@@ -236,7 +236,7 @@ export default function LicensesPage() {
             <span className="text-[9px] text-zinc-500 font-bold uppercase tracking-widest">Search</span>
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3 h-3 text-zinc-600" />
-              <input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search by License Key"
+              <input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search by Key"
                 className="w-full bg-zinc-900/50 border border-zinc-800 rounded-xl pl-9 pr-3 py-2 text-[10px] font-bold text-white outline-none placeholder:text-zinc-700" />
             </div>
           </div>
@@ -257,16 +257,16 @@ export default function LicensesPage() {
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
                 <RefreshCcw className="w-4 h-4 text-zinc-600" />
-                <h3 className="text-[10px] font-black text-zinc-600 uppercase tracking-widest">Maintenance Control Unit</h3>
+                <h3 className="text-[10px] font-black text-zinc-600 uppercase tracking-widest">Admin Tools</h3>
               </div>
-              <span className="text-[8px] font-bold text-zinc-800 uppercase tracking-widest tracking-[0.2em]">Authorized Personnel Only</span>
+              <span className="text-[8px] font-bold text-zinc-800 uppercase tracking-widest tracking-[0.2em]">Restricted Access</span>
             </div>
             <div className="flex flex-wrap gap-3">
               <button onClick={handleExportKeys} className="flex items-center gap-2 px-6 py-3 bg-zinc-900 border border-zinc-800 text-zinc-400 rounded-xl text-[9px] font-black uppercase tracking-widest hover:text-white transition-all group">
-                <Download className="w-4 h-4 group-hover:text-emerald-500 transition-colors" /> Export Ledger
+                <Download className="w-4 h-4 group-hover:text-emerald-500 transition-colors" /> Export CSV
               </button>
-              <button onClick={() => alert("File input triggered. Awaiting protocol upload...")} className="flex items-center gap-2 px-6 py-3 bg-zinc-900 border border-zinc-800 text-zinc-400 rounded-xl text-[9px] font-black uppercase tracking-widest hover:text-white transition-all group">
-                <Upload className="w-4 h-4 group-hover:text-purple-500 transition-colors" /> Import Protocol
+              <button onClick={() => alert("File import triggered...")} className="flex items-center gap-2 px-6 py-3 bg-zinc-900 border border-zinc-800 text-zinc-400 rounded-xl text-[9px] font-black uppercase tracking-widest hover:text-white transition-all group">
+                <Upload className="w-4 h-4 group-hover:text-purple-500 transition-colors" /> Import Keys
               </button>
               <div className="h-8 w-[1px] bg-zinc-900 mx-2" />
               <button onClick={handleGlobalReset} className="flex items-center gap-2 px-6 py-3 bg-zinc-900 border border-zinc-800 text-zinc-400 rounded-xl text-[9px] font-black uppercase tracking-widest hover:text-red-500 hover:border-red-500/30 transition-all group">
@@ -276,7 +276,7 @@ export default function LicensesPage() {
                 <Ban className="w-4 h-4" /> Toggle All Bans
               </button>
               <button onClick={handlePurgeLicensedData} className="flex items-center gap-2 px-6 py-3 bg-red-500/5 border border-red-500/10 text-red-500/50 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-red-500/10 hover:text-red-500 transition-all ml-auto">
-                <Trash2 className="w-4 h-4" /> Purge Licensed Data
+                <Trash2 className="w-4 h-4" /> Cleanup Keys
               </button>
             </div>
           </div>
@@ -285,13 +285,13 @@ export default function LicensesPage() {
         {/* License Table */}
         <div className="bg-zinc-950/50 border border-zinc-900 rounded-2xl overflow-hidden">
           {loading ? (
-            <div className="py-24 text-center"><div className="w-12 h-12 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-6" /><p className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest">Synchronizing...</p></div>
+            <div className="py-24 text-center"><div className="w-12 h-12 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-6" /><p className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest">Loading...</p></div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-zinc-900/50 border-b border-zinc-900">
-                    <th className="px-6 py-4 text-[9px] font-black text-zinc-500 uppercase tracking-widest">License Key</th>
+                    <th className="px-6 py-4 text-[9px] font-black text-zinc-500 uppercase tracking-widest">Key</th>
                     <th className="px-6 py-4 text-[9px] font-black text-zinc-500 uppercase tracking-widest">Product</th>
                     <th className="px-6 py-4 text-[9px] font-black text-zinc-500 uppercase tracking-widest">Expiry</th>
                     <th className="px-6 py-4 text-[9px] font-black text-zinc-500 uppercase tracking-widest">Status</th>
@@ -329,7 +329,7 @@ export default function LicensesPage() {
               {filteredLicenses.length === 0 && (
                 <div className="py-16 text-center">
                   <Key className="w-12 h-12 text-zinc-800 mx-auto mb-4" />
-                  <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest">No licenses found</p>
+                  <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest">No keys found</p>
                 </div>
               )}
             </div>
@@ -342,8 +342,8 @@ export default function LicensesPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-xl p-6">
           <div className="bg-[#0A0A0C] border border-zinc-900 w-full max-w-xl rounded-[2rem] p-10 shadow-2xl relative">
             <button onClick={() => setShowGenModal(false)} className="absolute top-6 right-6 text-zinc-600 hover:text-white transition-colors"><X className="w-6 h-6" /></button>
-            <h2 className="text-2xl font-black text-white uppercase italic tracking-tighter mb-1">Manage Your Licenses</h2>
-            <p className="text-[10px] text-zinc-600 font-bold uppercase tracking-widest mb-8">Generate new license keys for your products</p>
+            <h2 className="text-2xl font-black text-white uppercase italic tracking-tighter mb-1">Manage Your Keys</h2>
+            <p className="text-[10px] text-zinc-600 font-bold uppercase tracking-widest mb-8">Create new activation keys for your products</p>
 
             {generatedKeys.length > 0 ? (
               <div className="space-y-6">
@@ -393,7 +393,7 @@ export default function LicensesPage() {
 
                 <button disabled={isGenerating || !selectedProductId} className="w-full py-4 bg-blue-600 text-white text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-blue-500 transition-all disabled:opacity-50 flex items-center justify-center gap-2">
                   {isGenerating ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <Key className="w-4 h-4" />}
-                  {isGenerating ? "Generating..." : "Generate Key"}
+                  {isGenerating ? "Creating..." : "Create Key"}
                 </button>
               </form>
             )}
@@ -406,8 +406,8 @@ export default function LicensesPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-xl p-6">
           <div className="bg-[#0A0A0C] border border-zinc-900 w-full max-w-md rounded-[2rem] p-10 shadow-2xl relative">
             <button onClick={() => setShowTimeModal(false)} className="absolute top-6 right-6 text-zinc-600 hover:text-white transition-colors"><X className="w-6 h-6" /></button>
-            <h2 className="text-2xl font-black text-white uppercase italic tracking-tighter mb-1">Adjust License Time</h2>
-            <p className="text-[10px] text-zinc-600 font-bold uppercase tracking-widest mb-8">Add or remove time from all active licenses (e.g. for downtime reimbursement)</p>
+            <h2 className="text-2xl font-black text-white uppercase italic tracking-tighter mb-1">Extend Keys</h2>
+            <p className="text-[10px] text-zinc-600 font-bold uppercase tracking-widest mb-8">Add or remove time from all active keys (e.g. for downtime reimbursement)</p>
 
             <div className="space-y-6">
               <div className="grid grid-cols-2 gap-3">

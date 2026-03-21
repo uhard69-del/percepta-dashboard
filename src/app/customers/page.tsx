@@ -125,9 +125,9 @@ export default function CustomersPage() {
           <div>
             <div className="flex items-center gap-2 mb-1">
               <Users className="w-4 h-4 text-primary" />
-              <span className="text-[10px] font-black text-primary uppercase tracking-[0.3em]">Neural Hub CRM</span>
+              <span className="text-[10px] font-black text-primary uppercase tracking-[0.3em]">Customer Management</span>
             </div>
-            <h1 className="text-4xl font-black text-white tracking-tighter uppercase italic leading-none underline decoration-primary/20 decoration-4">Customers</h1>
+            <h1 className="text-4xl font-black text-white tracking-tighter uppercase italic leading-none underline decoration-primary/20 decoration-4">User Database</h1>
           </div>
           {userRole === "admin" && (
               <div className="flex items-center gap-4">
@@ -135,10 +135,10 @@ export default function CustomersPage() {
                   onClick={() => setShowSystemModal(true)} 
                   className="flex items-center gap-2 px-6 py-4 bg-zinc-900 border border-zinc-800 text-zinc-400 font-black rounded-2xl hover:bg-zinc-800 transition-all uppercase tracking-widest text-[9px]"
                 >
-                  <ShieldAlert className="w-4 h-4" /> System Console
+                  <ShieldAlert className="w-4 h-4" /> System Reset
                 </button>
                 <button onClick={() => setShowCreateModal(true)} className="flex items-center gap-2 px-6 py-4 bg-primary text-white font-black rounded-2xl hover:bg-primary/90 transition-all shadow-[0_20px_40px_-10px_rgba(139,92,246,0.3)] uppercase tracking-widest text-[9px]">
-                  <Plus className="w-4 h-4" /> Create operative
+                  <Plus className="w-4 h-4" /> Add Customer
                 </button>
               </div>
           )}
@@ -158,7 +158,7 @@ export default function CustomersPage() {
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-600 group-focus-within:text-primary transition-colors" />
               <input 
                 value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} 
-                placeholder={`Query neural database by ${filterBy.toLowerCase()}...`}
+                placeholder={`Search users by ${filterBy.toLowerCase()}...`}
                 className="w-full bg-zinc-900/50 border border-zinc-800 rounded-2xl pl-12 pr-4 py-4 text-[11px] font-bold text-white outline-none placeholder:text-zinc-700 focus:border-primary/50 transition-all" 
               />
           </div>
@@ -173,11 +173,11 @@ export default function CustomersPage() {
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-zinc-900/40 border-b border-zinc-900">
-                    <th className="px-8 py-6 text-[9px] font-black text-zinc-500 uppercase tracking-widest">Operative</th>
-                    <th className="px-8 py-6 text-[9px] font-black text-zinc-500 uppercase tracking-widest">Access State</th>
-                    <th className="px-8 py-6 text-[9px] font-black text-zinc-500 uppercase tracking-widest">Protocols</th>
-                    <th className="px-8 py-6 text-[9px] font-black text-zinc-500 uppercase tracking-widest">Audit Logs</th>
-                    <th className="px-8 py-6 text-[9px] font-black text-zinc-500 uppercase tracking-widest text-right">Moderations</th>
+                    <th className="px-8 py-6 text-[9px] font-black text-zinc-500 uppercase tracking-widest">Customer</th>
+                    <th className="px-8 py-6 text-[9px] font-black text-zinc-500 uppercase tracking-widest">Status</th>
+                    <th className="px-8 py-6 text-[9px] font-black text-zinc-500 uppercase tracking-widest">Products</th>
+                    <th className="px-8 py-6 text-[9px] font-black text-zinc-500 uppercase tracking-widest">Activity</th>
+                    <th className="px-8 py-6 text-[9px] font-black text-zinc-500 uppercase tracking-widest text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-900/50">
@@ -186,7 +186,7 @@ export default function CustomersPage() {
                       <td className="px-8 py-6">
                         <div className="flex flex-col">
                             <span className="text-[11px] font-black text-white uppercase italic tracking-tighter">{c.username}</span>
-                            <span className="text-[9px] font-bold text-zinc-600 font-mono tracking-tight">{c.email || "NO_COMM_CHANNEL"}</span>
+                            <span className="text-[9px] font-bold text-zinc-600 font-mono tracking-tight">{c.email || "NO_EMAIL"}</span>
                         </div>
                       </td>
                       <td className="px-8 py-6">
@@ -196,7 +196,7 @@ export default function CustomersPage() {
                                 ? "bg-red-500/10 border-red-500/20 text-red-500 shadow-[0_0_10px_rgba(239,68,68,0.2)]" 
                                 : "bg-emerald-500/10 border-emerald-500/20 text-emerald-500"
                         )}>
-                            {c.is_banned ? "Severed" : "Linked"}
+                            {c.is_banned ? "Banned" : "Active"}
                         </span>
                       </td>
                       <td className="px-8 py-6 text-zinc-500 font-bold text-[10px]">{c.total_licenses} Active</td>
@@ -205,8 +205,8 @@ export default function CustomersPage() {
                         <div className="flex items-center justify-end gap-2 opacity-30 group-hover:opacity-100 transition-opacity">
                             {userRole === "admin" && (
                                 <>
-                                    <button onClick={() => handleResetPassword(c.id)} title="Reset Neural Key" className="p-3 bg-zinc-900 border border-zinc-800 rounded-xl hover:text-primary transition-all shadow-inner"><Key className="w-3.5 h-3.5" /></button>
-                                    <button onClick={() => handleBan(c.id)} title={c.is_banned ? "Restore Access" : "Sever Access"} className={cn("p-3 bg-zinc-900 border border-zinc-800 rounded-xl transition-all shadow-inner", c.is_banned ? "text-emerald-500" : "hover:text-red-500")}>
+                                    <button onClick={() => handleResetPassword(c.id)} title="Reset Password" className="p-3 bg-zinc-900 border border-zinc-800 rounded-xl hover:text-primary transition-all shadow-inner"><Key className="w-3.5 h-3.5" /></button>
+                                    <button onClick={() => handleBan(c.id)} title={c.is_banned ? "Unban User" : "Ban User"} className={cn("p-3 bg-zinc-900 border border-zinc-800 rounded-xl transition-all shadow-inner", c.is_banned ? "text-emerald-500" : "hover:text-red-500")}>
                                         {c.is_banned ? <UserCheck className="w-3.5 h-3.5" /> : <Ban className="w-3.5 h-3.5" />}
                                     </button>
                                 </>
@@ -217,7 +217,7 @@ export default function CustomersPage() {
                     </tr>
                   ))}
                   {filteredCustomers.length === 0 && (
-                    <tr><td colSpan={6} className="py-20 text-center text-zinc-700 uppercase tracking-widest text-[10px] italic">No operatives detected in neural sector</td></tr>
+                    <tr><td colSpan={6} className="py-20 text-center text-zinc-700 uppercase tracking-widest text-[10px] italic">No users found in database</td></tr>
                   )}
                 </tbody>
               </table>
@@ -232,25 +232,25 @@ export default function CustomersPage() {
               <div className="bg-[#0A0A0C] border border-zinc-900 w-full max-w-lg rounded-[3rem] p-12 shadow-2xl relative overflow-hidden">
                   <div className="absolute top-0 right-0 p-12 opacity-[0.03] pointer-events-none align-baseline"><ShieldAlert className="w-48 h-48 text-primary" /></div>
                   <button onClick={() => setShowSystemModal(false)} className="absolute top-8 right-8 text-zinc-600 hover:text-white"><X className="w-6 h-6" /></button>
-                  <h2 className="text-3xl font-black text-white uppercase italic tracking-tighter mb-2">System Console</h2>
-                  <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest mb-10">Administrative Override & Initialization</p>
+                  <h2 className="text-3xl font-black text-white uppercase italic tracking-tighter mb-2">System Reset</h2>
+                  <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest mb-10">Administrative Override & Setup</p>
                   
                   <div className="space-y-6">
                       <div className="p-6 bg-red-500/5 border border-red-500/10 rounded-2xl group flex items-start gap-4">
                           <Trash2 className="w-8 h-8 text-red-500 mt-1" />
                           <div className="flex-1">
-                              <h3 className="text-[11px] font-black text-red-500 uppercase tracking-widest mb-1">Production Purge</h3>
-                              <p className="text-[10px] text-zinc-600 font-bold mb-4 uppercase tracking-tighter leading-relaxed">Permanently sever all test links. This wipes Logs, Licenses, Products, and Customers. Restore clean factory state.</p>
-                              <button onClick={handleSystemPurge} className="px-6 py-3 bg-red-500 text-white text-[9px] font-black uppercase tracking-widest rounded-xl hover:bg-red-600 transition-all">Execute Purge</button>
+                              <h3 className="text-[11px] font-black text-red-500 uppercase tracking-widest mb-1">Global System Wipe</h3>
+                              <p className="text-[10px] text-zinc-600 font-bold mb-4 uppercase tracking-tighter leading-relaxed">Permanently delete all test data. This wipes Logs, Licenses, Products, and Customers. Restore clean factory state.</p>
+                              <button onClick={handleSystemPurge} className="px-6 py-3 bg-red-500 text-white text-[9px] font-black uppercase tracking-widest rounded-xl hover:bg-red-600 transition-all">Execute Wipe</button>
                           </div>
                       </div>
 
                       <div className="p-6 bg-indigo-500/5 border border-indigo-500/10 rounded-2xl group flex items-start gap-4">
                           <Zap className="w-8 h-8 text-indigo-500 mt-1" />
                           <div className="flex-1">
-                              <h3 className="text-[11px] font-black text-indigo-500 uppercase tracking-widest mb-1">Percepta AI Launch</h3>
-                              <p className="text-[10px] text-zinc-600 font-bold mb-4 uppercase tracking-tighter leading-relaxed">Initialize official Aimbot protocols (Pro/Lite) into the neural matrix for active distribution.</p>
-                              <button onClick={handleInitialize} className="px-6 py-3 bg-indigo-600 text-white text-[9px] font-black uppercase tracking-widest rounded-xl hover:bg-indigo-500 transition-all">Initialize Launch</button>
+                              <h3 className="text-[11px] font-black text-indigo-500 uppercase tracking-widest mb-1">Setup Demo Products</h3>
+                              <p className="text-[10px] text-zinc-600 font-bold mb-4 uppercase tracking-tighter leading-relaxed">Add official Aimbot products (Pro/Lite) to your store to get started.</p>
+                              <button onClick={handleInitialize} className="px-6 py-3 bg-indigo-600 text-white text-[9px] font-black uppercase tracking-widest rounded-xl hover:bg-indigo-500 transition-all">Seed Products</button>
                           </div>
                       </div>
                   </div>
@@ -263,7 +263,7 @@ export default function CustomersPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 backdrop-blur-2xl p-6">
           <div className="bg-[#0A0A0C] border border-zinc-900 w-full max-w-md rounded-[2.5rem] p-12 shadow-2xl relative">
             <button onClick={() => setShowCreateModal(false)} className="absolute top-8 right-8 text-zinc-600 hover:text-white"><X className="w-6 h-6" /></button>
-            <h2 className="text-2xl font-black text-white uppercase italic tracking-tighter mb-8">Deploy Operative</h2>
+            <h2 className="text-2xl font-black text-white uppercase italic tracking-tighter mb-8">Add New Customer</h2>
             <form onSubmit={async (e) => {
               e.preventDefault();
               try {
@@ -275,17 +275,17 @@ export default function CustomersPage() {
                 if (res.ok) { fetchCustomers(); setShowCreateModal(false); }
               } catch (e) {}
             }} className="space-y-6 italic">
-              <div className="space-y-2">
-                <label className="text-[9px] font-black text-zinc-500 uppercase tracking-[0.3em]">Codename</label>
-                <input value={newName} onChange={(e) => setNewName(e.target.value)} required placeholder="operative_01"
+               <div className="space-y-2">
+                <label className="text-[9px] font-black text-zinc-500 uppercase tracking-[0.3em]">Username</label>
+                <input value={newName} onChange={(e) => setNewName(e.target.value)} required placeholder="customer_01"
                   className="w-full bg-zinc-900/50 border border-zinc-800 rounded-xl px-5 py-4 text-xs font-bold text-white outline-none focus:border-primary/50" />
               </div>
               <div className="space-y-2">
-                <label className="text-[9px] font-black text-zinc-500 uppercase tracking-[0.3em]">Neural Address</label>
-                <input type="email" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} placeholder="contact@nexus.io"
+                <label className="text-[9px] font-black text-zinc-500 uppercase tracking-[0.3em]">Email Address</label>
+                <input type="email" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} placeholder="customer@example.com"
                   className="w-full bg-zinc-900/50 border border-zinc-800 rounded-xl px-5 py-4 text-xs font-bold text-white outline-none focus:border-primary/50" />
               </div>
-              <button className="w-full py-5 bg-primary text-white text-[10px] font-black uppercase tracking-widest rounded-2xl hover:bg-primary/90 transition-all shadow-lg shadow-primary/20">Establish Link</button>
+              <button className="w-full py-5 bg-primary text-white text-[10px] font-black uppercase tracking-widest rounded-2xl hover:bg-primary/90 transition-all shadow-lg shadow-primary/20">Add Customer</button>
             </form>
           </div>
         </div>

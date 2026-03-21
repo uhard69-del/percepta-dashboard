@@ -24,6 +24,8 @@ interface Product {
   category: string;
   version: string;
   stock_limit: string;
+  is_on_sale?: boolean;
+  sale_price?: string | null;
 }
 
 export default function StorePage() {
@@ -83,18 +85,19 @@ export default function StorePage() {
       });
       if (res.ok) {
         const data = await res.json();
-        alert(`SUCCESS: Protocol ${selectedProduct.name} has been synchronized with your Vault.\nNeural Tax Applied: ${userRole === 'reseller' ? Math.round(Number(selectedProduct.price) / 5) + ' Credits' : '$' + selectedProduct.price}\n\nYour Key: ${data.key || "Available in Vault"}`);
+        const effectivePrice = selectedProduct.is_on_sale && selectedProduct.sale_price ? selectedProduct.sale_price : selectedProduct.price;
+        alert(`SUCCESS: ${selectedProduct.name} has been added to My Products.\nPrice: ${userRole === 'reseller' ? Math.round(Number(effectivePrice) / 5) + ' Credits' : '$' + effectivePrice}\n\nYour Key: ${data.key || "Available in My Products"}`);
         if (data.new_balance) {
             setUserCredits(data.new_balance);
             localStorage.setItem("credits", data.new_balance);
         }
         setShowCheckout(false);
       } else {
-        const err = await res.json();
-        alert(err.detail || "Frequency Intercepted. Procurement Failed.");
+        const data = await res.json();
+        alert(data.detail || "Transaction failed. Please try again.");
       }
     } catch (err) {
-      alert("Network link unstable.");
+      alert("Unable to connect to server.");
     } finally {
       setProcuring(false);
     }
@@ -136,7 +139,7 @@ export default function StorePage() {
              {isLoggedIn ? (
                <>
                  <Link href="/inventory" className="flex items-center gap-2 px-6 py-3 bg-indigo-600/10 border border-indigo-500/20 rounded-xl text-[10px] font-black uppercase tracking-widest text-indigo-500 hover:bg-indigo-600 hover:text-white transition-all shadow-lg shadow-indigo-500/5">
-                    <Package className="w-4 h-4" /> Intelligence Vault
+                    <Package className="w-4 h-4" /> My Products
                  </Link>
                  {(userRole === "admin" || userRole === "reseller") && (
                    <div className="px-4 py-2 bg-emerald-500/5 border border-emerald-500/10 rounded-xl flex flex-col items-center">
@@ -215,7 +218,7 @@ export default function StorePage() {
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-600 group-focus-within:text-indigo-500 transition-colors" />
                 <input 
                     type="text"
-                    placeholder="SCAN NETWORK FOR PROTOCOLS..."
+                    placeholder="SEARCH FOR PRODUCTS..."
                     className="w-full bg-zinc-900/40 border border-zinc-900 rounded-2xl py-4 pl-12 pr-6 text-[10px] font-bold uppercase tracking-widest focus:outline-none focus:border-indigo-500/30 transition-all placeholder:text-zinc-700"
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
@@ -242,7 +245,26 @@ export default function StorePage() {
                             </div>
                             <div className="text-right">
                                 <span className="block text-[8px] font-black text-indigo-500 uppercase tracking-[0.3em] mb-1">{userRole === 'reseller' ? 'Neural Tax' : 'Price Point'}</span>
-                                <span className="text-2xl font-black text-white italic">{userRole === 'reseller' ? `${Math.round(Number(product.price) / 5)} CR` : `$${product.price}`}</span>
+                                <div className="flex flex-col items-end">
+                                    {product.is_on_sale && product.sale_price && (
+                                        <span className="text-[10px] font-black text-zinc-600 line-through italic leading-none mb-1">
+                                            {userRole === 'reseller' ? `${Math.round(Number(product.price) / 5)} CR` : `$${product.price}`}
+                                        </span>
+                                    )}
+                                    <div className="flex items-center gap-2">
+                                        <span className={cn(
+                                            "text-2xl font-black italic",
+                                            product.is_on_sale ? "text-emerald-500" : "text-white"
+                                        )}>
+                                            {userRole === 'reseller' 
+                                                ? `${Math.round(Number(product.is_on_sale ? product.sale_price : product.price) / 5)} CR` 
+                                                : `$${product.is_on_sale ? product.sale_price : product.price}`}
+                                        </span>
+                                        {product.is_on_sale && (
+                                            <span className="px-1.5 py-0.5 bg-emerald-500 text-[#08080A] text-[7px] font-black rounded uppercase italic">SALE</span>
+                                        )}
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
@@ -284,13 +306,13 @@ export default function StorePage() {
                             }}
                             className="w-full flex items-center justify-center gap-3 py-4 bg-zinc-900 border border-zinc-800 rounded-2xl text-[10px] font-black text-white uppercase tracking-widest hover:bg-indigo-600 hover:border-indigo-500 transition-all duration-300 shadow-xl"
                         >
-                            {isLoggedIn ? "Initialize Protocol" : "Acquire Protocol"} <ChevronRight className="w-4 h-4" />
+                            {isLoggedIn ? "Buy Now" : "Register to Buy"} <ChevronRight className="w-4 h-4" />
                         </button>
                     </div>
                 ))
             ) : (
                 <div className="col-span-full py-20 text-center">
-                    <p className="text-[10px] font-black text-zinc-700 uppercase tracking-[0.4em] italic">No active protocols detected in this frequency range</p>
+                    <p className="text-[10px] font-black text-zinc-700 uppercase tracking-[0.4em] italic">No products found matching your search</p>
                 </div>
             )}
          </div>
@@ -321,18 +343,22 @@ export default function StorePage() {
             </button>
 
             <div className="mb-10">
-              <span className="text-[10px] font-black text-indigo-500 uppercase tracking-[0.3em]">Protocol Procurement</span>
-              <h2 className="text-3xl font-black text-white uppercase italic tracking-tighter">Confirm Acquisition</h2>
+              <span className="text-[10px] font-black text-indigo-500 uppercase tracking-[0.3em]">Secure Checkout</span>
+              <h2 className="text-3xl font-black text-white uppercase italic tracking-tighter">Confirm Purchase</h2>
             </div>
 
             <div className="p-6 bg-zinc-900/40 border border-zinc-900 rounded-2xl mb-10 space-y-4">
                 <div className="flex justify-between items-center border-b border-zinc-900 pb-4">
-                    <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Selected Unit</span>
+                    <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Selected Product</span>
                     <span className="text-[11px] font-black text-white uppercase italic">{selectedProduct.name}</span>
                 </div>
                 <div className="flex justify-between items-center pt-2">
-                    <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Neural Tax / Cost</span>
-                    <span className="text-xl font-black text-white italic">{userRole === 'reseller' ? `${Math.round(Number(selectedProduct.price) / 5)} CR` : `$${selectedProduct.price}`}</span>
+                    <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Total Price</span>
+                    <span className="text-xl font-black text-white italic">
+                        {userRole === 'reseller' 
+                            ? `${Math.round(Number(selectedProduct.is_on_sale ? selectedProduct.sale_price : selectedProduct.price) / 5)} Credits` 
+                            : `$${selectedProduct.is_on_sale ? selectedProduct.sale_price : selectedProduct.price}`}
+                    </span>
                 </div>
             </div>
 
@@ -344,7 +370,7 @@ export default function StorePage() {
                       disabled={procuring}
                       className="w-full py-5 bg-indigo-600 hover:bg-indigo-500 text-white text-[11px] font-black uppercase tracking-widest rounded-2xl transition-all shadow-2xl shadow-indigo-500/20 disabled:opacity-50"
                     >
-                      {procuring ? "Synchronizing Matrix..." : "Confirm & Download Protocol"}
+                      {procuring ? "Processing..." : "Confirm & Download Product"}
                     </button>
                     <p className="text-[8px] font-bold text-zinc-600 text-center uppercase tracking-widest">
                         Neural Reseller Priority: This protocol will be deducted from your available credit balance.
