@@ -2,7 +2,8 @@
 
 import { Header } from "@/components/Header";
 import { 
-  Users, Search, Plus, ExternalLink, MoreHorizontal, X
+  Users, Search, Plus, ExternalLink, MoreHorizontal, X, 
+  ShieldAlert, Ban, UserCheck, Key, Edit, Trash2, Zap, AlertTriangle
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
@@ -10,21 +11,26 @@ import { getApiUrl } from "@/lib/api";
 
 interface Customer {
   id: string;
-  username?: string;
-  email?: string;
-  discord_id?: string;
-  login_email?: string;
-  created_at?: string;
-  license_count?: number;
-  log_count?: number;
+  username: string;
+  email: string;
+  discord_id: string;
+  role: string;
+  credits: string;
+  is_banned: boolean;
+  created_at: string;
+  total_licenses: number;
+  total_logs: number;
 }
 
 export default function CustomersPage() {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [filterBy, setFilterBy] = useState("ID");
+  const [filterBy, setFilterBy] = useState("Name");
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showSystemModal, setShowSystemModal] = useState(false);
+  
+  // Create Form
   const [newName, setNewName] = useState("");
   const [newEmail, setNewEmail] = useState("");
   const [newDiscord, setNewDiscord] = useState("");
@@ -38,34 +44,64 @@ export default function CustomersPage() {
       });
       if (res.ok) {
         const data = await res.json();
-        setCustomers(data.map((u: Record<string, unknown>) => ({
-          id: u.id || u.user_id || "",
-          username: u.username || u.name || "",
-          email: u.email || "",
-          discord_id: u.discord_id || "",
-          login_email: u.login_email || u.email || "",
-          created_at: u.created_at || "",
-          license_count: u.license_count || 0,
-          log_count: u.log_count || 0,
-        })));
+        setCustomers(data);
       }
     } catch (err) { console.error("Failed to fetch customers:", err); }
     finally { setLoading(false); }
   };
 
-  const handleCreate = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleBan = async (userId: string) => {
+    if (!confirm("Are you sure you want to toggle ban status for this user?")) return;
     try {
-      const res = await fetch(getApiUrl("/api/users/admin/users"), {
+      const res = await fetch(getApiUrl(`/api/users/admin/users/${userId}/ban`), {
         method: "POST",
+        headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` }
+      });
+      if (res.ok) fetchCustomers();
+    } catch (err) { alert("Ban failed"); }
+  };
+
+  const handleResetPassword = async (userId: string) => {
+    const newPass = prompt("Enter new temporary password:");
+    if (!newPass) return;
+    try {
+      const res = await fetch(getApiUrl(`/api/users/admin/users/${userId}`), {
+        method: "PATCH",
         headers: { 
           "Content-Type": "application/json",
           "Authorization": `Bearer ${localStorage.getItem("token")}`
         },
-        body: JSON.stringify({ username: newName, email: newEmail, discord_id: newDiscord })
+        body: JSON.stringify({ password: newPass })
       });
-      if (res.ok) { fetchCustomers(); setShowCreateModal(false); setNewName(""); setNewEmail(""); setNewDiscord(""); }
-    } catch (err) { console.error("Create failed:", err); }
+      if (res.ok) alert("Password reset successful.");
+    } catch (err) { alert("Reset failed"); }
+  };
+
+  const handleSystemPurge = async () => {
+    if (!confirm("CRITICAL WARNING: This will PERMANENTLY delete all Logs, Licenses, Products, and non-admin Users. Proceed?")) return;
+    try {
+      const res = await fetch(getApiUrl("/api/settings/purge"), {
+        method: "POST",
+        headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` }
+      });
+      if (res.ok) {
+        alert("System Purged successfully.");
+        fetchCustomers();
+      }
+    } catch (err) { alert("Purge failed"); }
+  };
+
+  const handleInitialize = async () => {
+    try {
+      const res = await fetch(getApiUrl("/api/settings/initialize-percepta"), {
+        method: "POST",
+        headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` }
+      });
+      if (res.ok) {
+        alert("Percepta AI Protocols initialized.");
+        fetchCustomers();
+      }
+    } catch (err) { alert("Init failed"); }
   };
 
   const filteredCustomers = customers.filter(c => {
@@ -73,138 +109,175 @@ export default function CustomersPage() {
     if (!q) return true;
     if (filterBy === "ID") return c.id?.toLowerCase().includes(q);
     if (filterBy === "Name") return c.username?.toLowerCase().includes(q);
-    if (filterBy === "Email") return (c.email || c.login_email)?.toLowerCase().includes(q);
+    if (filterBy === "Email") return c.email?.toLowerCase().includes(q);
     return true;
   });
-
-  const formatDate = (d: string) => {
-    if (!d) return "–";
-    const diff = Date.now() - new Date(d).getTime();
-    const days = Math.floor(diff / 86400000);
-    if (days < 1) return "Today";
-    if (days < 30) return `${days} days ago`;
-    if (days < 365) return `${Math.floor(days / 30)} months ago`;
-    return `${Math.floor(days / 365)} year${Math.floor(days / 365) > 1 ? "s" : ""} ago`;
-  };
 
   return (
     <div className="flex-1 overflow-auto bg-[#08080A]">
       <Header />
-      <div className="p-10 max-w-[1600px] mx-auto space-y-8">
+      <div className="p-10 max-w-[1600px] mx-auto space-y-8 pb-32">
         <div className="flex items-center justify-between">
           <div>
             <div className="flex items-center gap-2 mb-1">
               <Users className="w-4 h-4 text-primary" />
-              <span className="text-[10px] font-black text-primary uppercase tracking-[0.3em]">CRM</span>
+              <span className="text-[10px] font-black text-primary uppercase tracking-[0.3em]">Neural Hub CRM</span>
             </div>
-            <h1 className="text-4xl font-black text-white tracking-tighter uppercase italic leading-none">Customers</h1>
+            <h1 className="text-4xl font-black text-white tracking-tighter uppercase italic leading-none underline decoration-primary/20 decoration-4">Customers</h1>
           </div>
-          <button onClick={() => setShowCreateModal(true)} className="flex items-center gap-2 px-6 py-4 bg-primary text-white font-black rounded-2xl hover:bg-primary/90 transition-all shadow-[0_20px_40px_-10px_rgba(139,92,246,0.3)] uppercase tracking-widest text-[9px]">
-            <Plus className="w-4 h-4" /> Create
-          </button>
+          <div className="flex items-center gap-4">
+            <button 
+              onClick={() => setShowSystemModal(true)} 
+              className="flex items-center gap-2 px-6 py-4 bg-zinc-900 border border-zinc-800 text-zinc-400 font-black rounded-2xl hover:bg-zinc-800 transition-all uppercase tracking-widest text-[9px]"
+            >
+              <ShieldAlert className="w-4 h-4" /> System Console
+            </button>
+            <button onClick={() => setShowCreateModal(true)} className="flex items-center gap-2 px-6 py-4 bg-primary text-white font-black rounded-2xl hover:bg-primary/90 transition-all shadow-[0_20px_40px_-10px_rgba(139,92,246,0.3)] uppercase tracking-widest text-[9px]">
+              <Plus className="w-4 h-4" /> Create operative
+            </button>
+          </div>
         </div>
 
-        {/* Controls */}
-        <div className="bg-zinc-950/50 border border-zinc-900 rounded-2xl p-4 flex flex-wrap gap-4 items-center">
-          <div className="flex items-center gap-2">
-            <span className="text-[9px] text-zinc-500 font-bold uppercase tracking-widest">Filter by</span>
-            <select value={filterBy} onChange={(e) => setFilterBy(e.target.value)}
-              className="bg-zinc-900/50 border border-zinc-800 rounded-xl px-3 py-2 text-[10px] font-bold text-white outline-none appearance-none cursor-pointer">
-              <option>ID</option>
-              <option>Name</option>
-              <option>Email</option>
-            </select>
-          </div>
-          <div className="flex items-center gap-2 flex-1">
-            <span className="text-[9px] text-zinc-500 font-bold uppercase tracking-widest">Search</span>
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3 h-3 text-zinc-600" />
-              <input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder={`Search by ${filterBy.toLowerCase()}`}
-                className="w-full bg-zinc-900/50 border border-zinc-800 rounded-xl pl-9 pr-3 py-2 text-[10px] font-bold text-white outline-none placeholder:text-zinc-700" />
+        {/* Filters */}
+        <div className="bg-zinc-950/50 border border-zinc-900 rounded-[2rem] p-6 flex flex-wrap gap-6 items-center shadow-xl">
+          <div className="flex items-center gap-3">
+            <span className="text-[9px] text-zinc-500 font-bold uppercase tracking-widest opacity-50">Filter Mode</span>
+            <div className="flex p-1 bg-zinc-900 rounded-xl gap-1">
+                {["Name", "Email", "ID"].map(f => (
+                    <button key={f} onClick={() => setFilterBy(f)} className={cn("px-4 py-1.5 rounded-lg text-[9px] font-black uppercase transition-all", filterBy === f ? "bg-primary text-white" : "text-zinc-600 hover:text-zinc-400")}>{f}</button>
+                ))}
             </div>
+          </div>
+          <div className="flex-1 relative group">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-600 group-focus-within:text-primary transition-colors" />
+              <input 
+                value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} 
+                placeholder={`Query neural database by ${filterBy.toLowerCase()}...`}
+                className="w-full bg-zinc-900/50 border border-zinc-800 rounded-2xl pl-12 pr-4 py-4 text-[11px] font-bold text-white outline-none placeholder:text-zinc-700 focus:border-primary/50 transition-all" 
+              />
           </div>
         </div>
 
         {/* Table */}
-        <div className="bg-zinc-950/50 border border-zinc-900 rounded-2xl overflow-hidden">
+        <div className="bg-zinc-950/50 border border-zinc-900 rounded-[2.5rem] overflow-hidden shadow-2xl">
           {loading ? (
-            <div className="py-24 text-center"><div className="w-12 h-12 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-6" /></div>
+            <div className="py-24 text-center"><div className="w-12 h-12 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto" /></div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="bg-zinc-900/50 border-b border-zinc-900">
-                    <th className="px-6 py-4 text-[9px] font-black text-zinc-500 uppercase tracking-widest">ID</th>
-                    <th className="px-6 py-4 text-[9px] font-black text-zinc-500 uppercase tracking-widest">Name</th>
-                    <th className="px-6 py-4 text-[9px] font-black text-zinc-500 uppercase tracking-widest">Discord ID</th>
-                    <th className="px-6 py-4 text-[9px] font-black text-zinc-500 uppercase tracking-widest">Login Email</th>
-                    <th className="px-6 py-4 text-[9px] font-black text-zinc-500 uppercase tracking-widest">Created At</th>
-                    <th className="px-6 py-4 text-[9px] font-black text-zinc-500 uppercase tracking-widest">Licenses</th>
-                    <th className="px-6 py-4 text-[9px] font-black text-zinc-500 uppercase tracking-widest">Total Logs</th>
-                    <th className="px-6 py-4 text-[9px] font-black text-zinc-500 uppercase tracking-widest">Actions</th>
+                  <tr className="bg-zinc-900/40 border-b border-zinc-900">
+                    <th className="px-8 py-6 text-[9px] font-black text-zinc-500 uppercase tracking-widest">Operative</th>
+                    <th className="px-8 py-6 text-[9px] font-black text-zinc-500 uppercase tracking-widest">Access State</th>
+                    <th className="px-8 py-6 text-[9px] font-black text-zinc-500 uppercase tracking-widest">Credits</th>
+                    <th className="px-8 py-6 text-[9px] font-black text-zinc-500 uppercase tracking-widest">Protocols</th>
+                    <th className="px-8 py-6 text-[9px] font-black text-zinc-500 uppercase tracking-widest">Audit Logs</th>
+                    <th className="px-8 py-6 text-[9px] font-black text-zinc-500 uppercase tracking-widest text-right">Moderations</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-900/50">
                   {filteredCustomers.map((c) => (
-                    <tr key={c.id} className="hover:bg-primary/[0.02] transition-colors">
-                      <td className="px-6 py-4"><span className="text-[10px] font-mono font-bold text-zinc-500">{c.id?.substring(0, 12)}...</span></td>
-                      <td className="px-6 py-4"><span className="text-[10px] font-bold text-white">{c.username || "–"}</span></td>
-                      <td className="px-6 py-4"><span className="text-[10px] font-mono font-bold text-primary">{c.discord_id || "–"}</span></td>
-                      <td className="px-6 py-4"><span className="text-[10px] font-mono font-bold text-zinc-400">{c.login_email || "–"}</span></td>
-                      <td className="px-6 py-4"><span className="text-[10px] font-bold text-zinc-500">{formatDate(c.created_at || "")}</span></td>
-                      <td className="px-6 py-4">
-                        <span className="text-[10px] font-bold text-blue-400 flex items-center gap-1 cursor-pointer hover:text-blue-300">
-                          {c.license_count || 0} Licenses <ExternalLink className="w-3 h-3" />
+                    <tr key={c.id} className={cn("hover:bg-primary/[0.02] transition-colors group", c.is_banned && "bg-red-500/[0.02]")}>
+                      <td className="px-8 py-6">
+                        <div className="flex flex-col">
+                            <span className="text-[11px] font-black text-white uppercase italic tracking-tighter">{c.username}</span>
+                            <span className="text-[9px] font-bold text-zinc-600 font-mono tracking-tight">{c.email || "NO_COMM_CHANNEL"}</span>
+                        </div>
+                      </td>
+                      <td className="px-8 py-6">
+                        <span className={cn(
+                            "px-3 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest border",
+                            c.is_banned 
+                                ? "bg-red-500/10 border-red-500/20 text-red-500 shadow-[0_0_10px_rgba(239,68,68,0.2)]" 
+                                : "bg-emerald-500/10 border-emerald-500/20 text-emerald-500"
+                        )}>
+                            {c.is_banned ? "Severed" : "Linked"}
                         </span>
                       </td>
-                      <td className="px-6 py-4">
-                        <span className="text-[10px] font-bold text-blue-400 flex items-center gap-1 cursor-pointer hover:text-blue-300">
-                          {c.log_count || 0} Logs <ExternalLink className="w-3 h-3" />
-                        </span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <button className="p-2 hover:bg-zinc-800 rounded-lg transition-all">
-                          <MoreHorizontal className="w-4 h-4 text-zinc-500" />
-                        </button>
+                      <td className="px-8 py-6"><span className="text-[10px] font-black text-white">{c.credits} CC</span></td>
+                      <td className="px-8 py-6 text-zinc-500 font-bold text-[10px]">{c.total_licenses} Active</td>
+                      <td className="px-8 py-6 text-zinc-500 font-bold text-[10px]">{c.total_logs} Events</td>
+                      <td className="px-8 py-6">
+                        <div className="flex items-center justify-end gap-2 opacity-30 group-hover:opacity-100 transition-opacity">
+                            <button onClick={() => handleResetPassword(c.id)} title="Reset Neural Key" className="p-3 bg-zinc-900 border border-zinc-800 rounded-xl hover:text-primary transition-all shadow-inner"><Key className="w-3.5 h-3.5" /></button>
+                            <button onClick={() => handleBan(c.id)} title={c.is_banned ? "Restore Access" : "Sever Access"} className={cn("p-3 bg-zinc-900 border border-zinc-800 rounded-xl transition-all shadow-inner", c.is_banned ? "text-emerald-500" : "hover:text-red-500")}>
+                                {c.is_banned ? <UserCheck className="w-3.5 h-3.5" /> : <Ban className="w-3.5 h-3.5" />}
+                            </button>
+                            <button className="p-3 bg-zinc-900 border border-zinc-800 rounded-xl hover:text-white transition-all shadow-inner"><MoreHorizontal className="w-3.5 h-3.5" /></button>
+                        </div>
                       </td>
                     </tr>
                   ))}
+                  {filteredCustomers.length === 0 && (
+                    <tr><td colSpan={6} className="py-20 text-center text-zinc-700 uppercase tracking-widest text-[10px] italic">No operatives detected in neural sector</td></tr>
+                  )}
                 </tbody>
               </table>
-              {filteredCustomers.length === 0 && (
-                <div className="py-16 text-center">
-                  <Users className="w-12 h-12 text-zinc-800 mx-auto mb-4" />
-                  <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest">No customers found</p>
-                </div>
-              )}
             </div>
           )}
         </div>
       </div>
 
-      {/* Create Customer Modal */}
+      {/* System Console Modal */}
+      {showSystemModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 backdrop-blur-2xl p-6">
+              <div className="bg-[#0A0A0C] border border-zinc-900 w-full max-w-lg rounded-[3rem] p-12 shadow-2xl relative overflow-hidden">
+                  <div className="absolute top-0 right-0 p-12 opacity-[0.03] pointer-events-none align-baseline"><ShieldAlert className="w-48 h-48 text-primary" /></div>
+                  <button onClick={() => setShowSystemModal(false)} className="absolute top-8 right-8 text-zinc-600 hover:text-white"><X className="w-6 h-6" /></button>
+                  <h2 className="text-3xl font-black text-white uppercase italic tracking-tighter mb-2">System Console</h2>
+                  <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest mb-10">Administrative Override & Initialization</p>
+                  
+                  <div className="space-y-6">
+                      <div className="p-6 bg-red-500/5 border border-red-500/10 rounded-2xl group flex items-start gap-4">
+                          <Trash2 className="w-8 h-8 text-red-500 mt-1" />
+                          <div className="flex-1">
+                              <h3 className="text-[11px] font-black text-red-500 uppercase tracking-widest mb-1">Production Purge</h3>
+                              <p className="text-[10px] text-zinc-600 font-bold mb-4 uppercase tracking-tighter leading-relaxed">Permanently sever all test links. This wipes Logs, Licenses, Products, and Customers. Restore clean factory state.</p>
+                              <button onClick={handleSystemPurge} className="px-6 py-3 bg-red-500 text-white text-[9px] font-black uppercase tracking-widest rounded-xl hover:bg-red-600 transition-all">Execute Purge</button>
+                          </div>
+                      </div>
+
+                      <div className="p-6 bg-indigo-500/5 border border-indigo-500/10 rounded-2xl group flex items-start gap-4">
+                          <Zap className="w-8 h-8 text-indigo-500 mt-1" />
+                          <div className="flex-1">
+                              <h3 className="text-[11px] font-black text-indigo-500 uppercase tracking-widest mb-1">Percepta AI Launch</h3>
+                              <p className="text-[10px] text-zinc-600 font-bold mb-4 uppercase tracking-tighter leading-relaxed">Initialize official Aimbot protocols (Pro/Lite) into the neural matrix for active distribution.</p>
+                              <button onClick={handleInitialize} className="px-6 py-3 bg-indigo-600 text-white text-[9px] font-black uppercase tracking-widest rounded-xl hover:bg-indigo-500 transition-all">Initialize Launch</button>
+                          </div>
+                      </div>
+                  </div>
+              </div>
+          </div>
+      )}
+
+      {/* Create operative Modal */}
       {showCreateModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-xl p-6">
-          <div className="bg-[#0A0A0C] border border-zinc-900 w-full max-w-md rounded-[2rem] p-10 shadow-2xl relative">
-            <button onClick={() => setShowCreateModal(false)} className="absolute top-6 right-6 text-zinc-600 hover:text-white"><X className="w-6 h-6" /></button>
-            <h2 className="text-2xl font-black text-white uppercase italic tracking-tighter mb-6">Create Customer</h2>
-            <form onSubmit={handleCreate} className="space-y-5">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 backdrop-blur-2xl p-6">
+          <div className="bg-[#0A0A0C] border border-zinc-900 w-full max-w-md rounded-[2.5rem] p-12 shadow-2xl relative">
+            <button onClick={() => setShowCreateModal(false)} className="absolute top-8 right-8 text-zinc-600 hover:text-white"><X className="w-6 h-6" /></button>
+            <h2 className="text-2xl font-black text-white uppercase italic tracking-tighter mb-8">Deploy Operative</h2>
+            <form onSubmit={async (e) => {
+              e.preventDefault();
+              try {
+                const res = await fetch(getApiUrl("/api/users/admin/users"), {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json", "Authorization": `Bearer ${localStorage.getItem("token")}` },
+                  body: JSON.stringify({ username: newName, email: newEmail, discord_id: newDiscord, password: "temp_password_123" })
+                });
+                if (res.ok) { fetchCustomers(); setShowCreateModal(false); }
+              } catch (e) {}
+            }} className="space-y-6 italic">
               <div className="space-y-2">
-                <label className="text-[9px] font-black text-zinc-500 uppercase tracking-widest">Name</label>
-                <input value={newName} onChange={(e) => setNewName(e.target.value)} required
-                  className="w-full bg-zinc-900/50 border border-zinc-800 rounded-xl px-4 py-3 text-xs font-bold text-white outline-none" />
+                <label className="text-[9px] font-black text-zinc-500 uppercase tracking-[0.3em]">Codename</label>
+                <input value={newName} onChange={(e) => setNewName(e.target.value)} required placeholder="operative_01"
+                  className="w-full bg-zinc-900/50 border border-zinc-800 rounded-xl px-5 py-4 text-xs font-bold text-white outline-none focus:border-primary/50" />
               </div>
               <div className="space-y-2">
-                <label className="text-[9px] font-black text-zinc-500 uppercase tracking-widest">Email</label>
-                <input type="email" value={newEmail} onChange={(e) => setNewEmail(e.target.value)}
-                  className="w-full bg-zinc-900/50 border border-zinc-800 rounded-xl px-4 py-3 text-xs font-bold text-white outline-none" />
+                <label className="text-[9px] font-black text-zinc-500 uppercase tracking-[0.3em]">Neural Address</label>
+                <input type="email" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} placeholder="contact@nexus.io"
+                  className="w-full bg-zinc-900/50 border border-zinc-800 rounded-xl px-5 py-4 text-xs font-bold text-white outline-none focus:border-primary/50" />
               </div>
-              <div className="space-y-2">
-                <label className="text-[9px] font-black text-zinc-500 uppercase tracking-widest">Discord ID</label>
-                <input value={newDiscord} onChange={(e) => setNewDiscord(e.target.value)}
-                  className="w-full bg-zinc-900/50 border border-zinc-800 rounded-xl px-4 py-3 text-xs font-bold text-white outline-none font-mono" />
-              </div>
-              <button className="w-full py-4 bg-primary text-white text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-primary/90 transition-all">Create Customer</button>
+              <button className="w-full py-5 bg-primary text-white text-[10px] font-black uppercase tracking-widest rounded-2xl hover:bg-primary/90 transition-all shadow-lg shadow-primary/20">Establish Link</button>
             </form>
           </div>
         </div>

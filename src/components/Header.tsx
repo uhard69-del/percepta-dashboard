@@ -164,10 +164,17 @@ export function Header() {
                      </>
                    )}
                    <button 
-                     onClick={() => window.location.href = "/store"}
+                     onClick={() => window.location.href = "/inventory"}
                      className="w-full p-4 bg-zinc-950 border border-zinc-900 rounded-2xl flex items-center gap-4 hover:border-indigo-500/30 transition-all group"
                    >
                       <Package className="w-4 h-4 text-zinc-600 group-hover:text-indigo-500" />
+                      <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Intelligence Vault</span>
+                   </button>
+                   <button 
+                     onClick={() => window.location.href = "/store"}
+                     className="w-full p-4 bg-zinc-950 border border-zinc-900 rounded-2xl flex items-center gap-4 hover:border-indigo-500/30 transition-all group"
+                   >
+                      <Zap className="w-4 h-4 text-zinc-600 group-hover:text-indigo-500" />
                       <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Marketplace</span>
                    </button>
                   <div className="pt-4 border-t border-zinc-900">
