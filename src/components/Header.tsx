@@ -172,7 +172,10 @@ export function Header() {
                    </button>
                   <div className="pt-4 border-t border-zinc-900">
                      <button 
-                       onClick={() => window.location.href = "/login"}
+                       onClick={() => {
+                         localStorage.clear();
+                         window.location.href = "/login";
+                       }}
                        className="w-full p-4 bg-zinc-900/50 border border-zinc-900 rounded-2xl flex items-center gap-4 hover:bg-red-500/5 hover:border-red-500/30 transition-all group"
                      >
                         <LogOut className="w-4 h-4 text-zinc-600 group-hover:text-red-500" />

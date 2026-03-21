@@ -31,10 +31,17 @@ export default function StorePage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState("All");
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [username, setUsername] = useState("Member");
 
   const categories = ["All", "Aimbot", "ESP", "Misc", "Bundles"];
 
   useEffect(() => {
+    setIsLoggedIn(!!localStorage.getItem("token"));
+    setIsAdmin(localStorage.getItem("role") === "admin");
+    setUsername(localStorage.getItem("username") || "Member");
+
     const fetchProducts = async () => {
       try {
         const res = await fetch(getApiUrl("/api/products/public/list"));
@@ -50,6 +57,11 @@ export default function StorePage() {
     };
     fetchProducts();
   }, []);
+
+  const handleLogout = () => {
+    localStorage.clear();
+    window.location.reload();
+  };
 
   const filteredProducts = products.filter(p => {
     const matchesSearch = p.name.toLowerCase().includes(search.toLowerCase()) || 
@@ -79,12 +91,28 @@ export default function StorePage() {
           </div>
 
           <div className="flex items-center gap-4">
-             <Link href="/login" className="px-6 py-3 text-[10px] font-black uppercase tracking-widest text-zinc-500 hover:text-white transition-all">Sign In</Link>
-             <Link href="/register" className="px-8 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-xl shadow-indigo-500/10 active:scale-95 group">
-                <span className="flex items-center gap-2">
-                    Start Protection <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                </span>
-             </Link>
+             {isLoggedIn ? (
+               <>
+                 <div className="flex flex-col items-end mr-4">
+                    <span className="text-[8px] font-black text-zinc-600 uppercase tracking-widest leading-none mb-1">Authenticated</span>
+                    <span className="text-[10px] font-black text-white uppercase italic tracking-tighter">{username}</span>
+                 </div>
+                 {isAdmin ? (
+                   <Link href="/dashboard" className="px-6 py-3 bg-zinc-900 border border-zinc-800 rounded-xl text-[10px] font-black uppercase tracking-widest text-white hover:border-indigo-500/30 transition-all">Control Panel</Link>
+                 ) : (
+                   <button onClick={handleLogout} className="px-6 py-3 bg-red-500/10 border border-red-500/20 rounded-xl text-[10px] font-black uppercase tracking-widest text-red-500 hover:bg-red-500/20 transition-all">Terminate</button>
+                 )}
+               </>
+             ) : (
+               <>
+                 <Link href="/login" className="px-6 py-3 text-[10px] font-black uppercase tracking-widest text-zinc-500 hover:text-white transition-all">Sign In</Link>
+                 <Link href="/register" className="px-8 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-xl shadow-indigo-500/10 active:scale-95 group">
+                    <span className="flex items-center gap-2">
+                        Start Protection <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                    </span>
+                 </Link>
+               </>
+             )}
           </div>
         </div>
       </nav>
@@ -189,12 +217,33 @@ export default function StorePage() {
                             </div>
                         </div>
 
-                        <Link 
-                            href={`/register?product=${product.id}`}
+                        <button 
+                            onClick={async () => {
+                                if (!isLoggedIn) {
+                                  window.location.href = `/register?product=${product.id}`;
+                                  return;
+                                }
+                                
+                                try {
+                                  const res = await fetch(getApiUrl(`/api/licenses/claim/${product.id}`), {
+                                    method: "POST",
+                                    headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` }
+                                  });
+                                  if (res.ok) {
+                                    const data = await res.json();
+                                    alert(`SUCCESS: Protocol ${product.name} has been initialized.\nYour Key: ${data.key || "Check Inventory"}`);
+                                  } else {
+                                    const err = await res.json();
+                                    alert(err.detail || "Frequency Intercepted. Claim Failed.");
+                                  }
+                                } catch (err) {
+                                  alert("Network link unstable.");
+                                }
+                            }}
                             className="w-full flex items-center justify-center gap-3 py-4 bg-zinc-900 border border-zinc-800 rounded-2xl text-[10px] font-black text-white uppercase tracking-widest hover:bg-indigo-600 hover:border-indigo-500 transition-all duration-300 shadow-xl"
                         >
-                            Acquire Protocol <ChevronRight className="w-4 h-4" />
-                        </Link>
+                            {isLoggedIn ? "Initialize Protocol" : "Acquire Protocol"} <ChevronRight className="w-4 h-4" />
+                        </button>
                     </div>
                 ))
             ) : (
