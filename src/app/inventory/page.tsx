@@ -110,14 +110,14 @@ export default function InventoryPage() {
              <Link href="/store" className="p-1 rounded-2xl bg-zinc-950 border border-zinc-900 shadow-2xl flex items-center justify-center hover:border-indigo-500/30 transition-all">
                 <img src="/logo.png" className="w-8 h-8 object-contain drop-shadow-[0_0_10px_rgba(99,102,241,0.5)]" alt="PerceptaAI Logo" />
              </Link>
-             <span className="text-xl font-black tracking-tighter uppercase italic">
-                My<span className="text-indigo-500 italic">Products</span>
-             </span>
+              <span className="text-xl font-black tracking-tighter uppercase italic">
+                Product<span className="text-indigo-500 italic">Vault</span>
+              </span>
           </div>
 
           <div className="hidden md:flex items-center gap-10">
              <button onClick={() => window.location.href = "/store"} className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 hover:text-white transition-colors">Marketplace</button>
-             <button onClick={() => window.location.href = "/inventory"} className="text-[10px] font-black uppercase tracking-[0.2em] text-white transition-colors border-b-2 border-indigo-500 pb-1 italic">My Products</button>
+              <button onClick={() => window.location.href = "/inventory"} className="text-[10px] font-black uppercase tracking-[0.2em] text-white transition-colors border-b-2 border-indigo-500 pb-1 italic">Product Vault</button>
              <button onClick={() => alert("Network Status: STABLE")} className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 hover:text-white transition-colors">Network Status</button>
           </div>
 
@@ -213,11 +213,11 @@ export default function InventoryPage() {
 
                            <div className="space-y-4 mb-8 relative z-10">
                                <h3 className="text-2xl font-black text-white uppercase italic tracking-tighter line-clamp-1">
-                                   {lic.product?.name || "Target Protocol"}
+                                   {lic.product?.name || "Product"}
                                </h3>
                                <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest italic">Activation Key:</p>
-                                <div className="p-4 bg-black border border-zinc-900 rounded-2xl font-mono text-[11px] text-white break-all select-all flex items-center justify-between group/key transition-all hover:border-indigo-500/20 shadow-inner">
-                                   <span>{lic.key_string || "LOADING..."}</span>
+                                 <div className="p-4 bg-black border border-zinc-900 rounded-2xl font-mono text-[11px] text-white break-all select-all flex items-center justify-between group/key transition-all hover:border-indigo-500/20 shadow-inner">
+                                   <span>{lic.key_string || lic.key_hash.substring(0, 16) + "..."}</span>
                                    <ExternalLink className="w-3 h-3 opacity-30 group-hover/key:opacity-100 transition-opacity text-indigo-500" />
                                </div>
                                <div className="pt-2">
@@ -294,7 +294,7 @@ export default function InventoryPage() {
                             {licenses.length === 0 && (
                                 <tr>
                                     <td colSpan={4} className="py-20 text-center text-zinc-700 uppercase tracking-widest text-[10px] italic">
-                                        No historical records detected in procurement log.
+                                        No historical records detected in purchase log.
                                     </td>
                                 </tr>
                             )}
@@ -304,7 +304,7 @@ export default function InventoryPage() {
                 <div className="flex items-center gap-3 p-6 bg-indigo-500/5 border border-indigo-500/10 rounded-[2rem]">
                     <ShoppingBag className="w-5 h-5 text-indigo-500" />
                     <p className="text-[9px] font-black text-indigo-500 uppercase tracking-widest flex-1">
-                        Looking for more power? Visit the marketplace for the latest neuro-assistance protocols.
+                        Looking for more power? Visit the marketplace for the latest security products.
                     </p>
                     <Link href="/store" className="text-[9px] font-black text-white bg-indigo-600 px-6 py-3 rounded-xl uppercase tracking-widest hover:bg-indigo-500 transition-all">Go to Store</Link>
                 </div>

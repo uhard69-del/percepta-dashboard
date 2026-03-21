@@ -126,7 +126,7 @@ export default function StorePage() {
 
           <div className="hidden md:flex items-center gap-10">
              <button onClick={() => window.location.href = "/store"} className="text-[10px] font-black uppercase tracking-[0.2em] text-white transition-colors border-b-2 border-indigo-500 pb-1">Marketplace</button>
-             <button onClick={() => window.open(getApiUrl("/docs"), "_blank")} className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 hover:text-white transition-colors">Documentation</button>
+              <button onClick={() => window.open("https://github.com/uhard69-del/percepta-backend#documentation", "_blank")} className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 hover:text-white transition-colors">Documentation</button>
              <button onClick={() => {
                  const start = Date.now();
                  fetch(getApiUrl("/")).then(() => {
@@ -244,7 +244,7 @@ export default function StorePage() {
                                 <Package className="w-6 h-6 text-indigo-500" />
                             </div>
                             <div className="text-right">
-                                <span className="block text-[8px] font-black text-indigo-500 uppercase tracking-[0.3em] mb-1">{userRole === 'reseller' ? 'Neural Tax' : 'Price Point'}</span>
+                                <span className="block text-[8px] font-black text-indigo-500 uppercase tracking-[0.3em] mb-1">Pricing</span>
                                 <div className="flex flex-col items-end">
                                     {product.is_on_sale && product.sale_price && (
                                         <span className="text-[10px] font-black text-zinc-600 line-through italic leading-none mb-1">
@@ -290,8 +290,8 @@ export default function StorePage() {
                                 </div>
                             </div>
                             <div className="text-right">
-                                <span className="text-[8px] font-black text-zinc-600 uppercase tracking-[0.3em] mb-1 text-right block">StockPool</span>
-                                <span className="text-[10px] font-black text-white uppercase italic">{product.stock_limit > "0" ? `${product.stock_limit} units` : "ON-DEMAND"}</span>
+                                <span className="text-[8px] font-black text-zinc-600 uppercase tracking-[0.3em] mb-1 text-right block">Availability</span>
+                                <span className="text-[10px] font-black text-white uppercase italic">{product.stock_limit > "0" ? `${product.stock_limit} items` : "READY"}</span>
                             </div>
                         </div>
 

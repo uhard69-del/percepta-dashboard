@@ -194,7 +194,7 @@ export default function ProductsPage() {
   };
 
   const handleDeleteProduct = async (id: string, name: string) => {
-    if (!window.confirm(`DANGER: Are you sure you want to completely terminal protocol [${name}]? This action deletes the template and prevents future generations.`)) return;
+    if (!window.confirm(`DANGER: Are you sure you want to completely delete product [${name}]? This action deletes the template and all associated licenses.`)) return;
     try {
       const res = await fetch(getApiUrl(`/api/products/admin/products/${id}`), {
         method: "DELETE",
@@ -203,10 +203,28 @@ export default function ProductsPage() {
       if (res.ok) {
         fetchProducts();
       } else {
-        alert("Failed to terminate protocol. It may have active dependencies.");
+        alert("Failed to delete product.");
       }
     } catch (err) {
       console.error("Delete failed", err);
+    }
+  };
+
+  const handleGlobalWipe = async () => {
+    if (!window.confirm("CRITICAL WARNING: This will permanently delete ALL products and ALL associated licenses from the system. This action cannot be undone. Proceed?")) return;
+    try {
+      const res = await fetch(getApiUrl("/api/products/admin/products/bulk/wipe"), {
+        method: "DELETE",
+        headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` }
+      });
+      if (res.ok) {
+        alert("System Cleaned. All products and licenses have been removed.");
+        fetchProducts();
+      } else {
+        alert("Wipe failed.");
+      }
+    } catch (err) {
+      console.error("Wipe error", err);
     }
   };
 
@@ -223,6 +241,9 @@ export default function ProductsPage() {
             <h1 className="text-4xl font-black text-white tracking-tighter uppercase italic leading-none">Product Management</h1>
           </div>
           <div className="flex gap-4">
+             <button onClick={handleGlobalWipe} className="px-6 py-4 bg-red-500/10 border border-red-500/20 rounded-2xl text-[9px] font-black text-red-500 uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all">
+                Wipe All Products
+             </button>
              <button onClick={fetchProducts} className="p-4 bg-zinc-950 border border-zinc-900 rounded-2xl text-zinc-600 hover:text-white transition-all">
                 <RefreshCw className={cn("w-5 h-5", loading && "animate-spin")} />
              </button>
@@ -309,10 +330,10 @@ export default function ProductsPage() {
                     </div>
 
                     <div className="mt-6 pt-6 border-t border-zinc-900 flex items-center justify-between">
-                         <div className="flex flex-col">
-                            <span className="text-[8px] font-black text-zinc-700 uppercase tracking-widest mb-1">Stock Pool</span>
-                            <span className="text-xs font-black text-white italic">{product.stock_limit} units</span>
-                         </div>
+                          <div className="flex flex-col">
+                             <span className="text-[8px] font-black text-zinc-700 uppercase tracking-widest mb-1">Stock Availability</span>
+                             <span className="text-xs font-black text-white italic">{product.stock_limit} units</span>
+                          </div>
                           <div className="flex gap-2">
                              <button 
                                 onClick={() => handleRefillStock(product.name)}
@@ -343,8 +364,8 @@ export default function ProductsPage() {
             {products.length === 0 && (
               <div className="lg:col-span-3 py-32 text-center border-2 border-dashed border-zinc-900 rounded-[3rem]">
                  <Package className="w-16 h-16 text-zinc-800 mx-auto mb-6" />
-                 <h3 className="text-xl font-black text-zinc-700 uppercase italic tracking-widest mb-2">No Products Found</h3>
-                 <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-[0.3em]">Click 'Add New Product' to get started</p>
+                  <h3 className="text-xl font-black text-zinc-700 uppercase italic tracking-widest mb-2">No Products Found</h3>
+                  <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-[0.3em]">Click 'Add New Product' to clear the slate</p>
               </div>
             )}
           </div>

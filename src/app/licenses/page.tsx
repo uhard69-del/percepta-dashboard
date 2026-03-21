@@ -343,7 +343,7 @@ export default function LicensesPage() {
           <div className="bg-[#0A0A0C] border border-zinc-900 w-full max-w-xl rounded-[2rem] p-10 shadow-2xl relative">
             <button onClick={() => setShowGenModal(false)} className="absolute top-6 right-6 text-zinc-600 hover:text-white transition-colors"><X className="w-6 h-6" /></button>
             <h2 className="text-2xl font-black text-white uppercase italic tracking-tighter mb-1">Manage Your Keys</h2>
-            <p className="text-[10px] text-zinc-600 font-bold uppercase tracking-widest mb-8">Create new activation keys for your products</p>
+            <p className="text-[10px] text-zinc-600 font-bold uppercase tracking-widest mb-8">Generate valid activation keys for your products</p>
 
             {generatedKeys.length > 0 ? (
               <div className="space-y-6">
@@ -358,7 +358,7 @@ export default function LicensesPage() {
             ) : (
               <form onSubmit={handleGenerate} className="space-y-6">
                 <div className="space-y-2">
-                  <label className="text-[9px] font-black text-zinc-500 uppercase tracking-widest">Select Project</label>
+                  <label className="text-[9px] font-black text-zinc-500 uppercase tracking-widest">Select Product</label>
                   <select value={selectedProductId} onChange={(e) => setSelectedProductId(e.target.value)} required
                     className="w-full bg-zinc-900/50 border border-zinc-800 rounded-xl px-4 py-3 text-xs font-bold text-white outline-none appearance-none cursor-pointer">
                     <option value="">Select a product</option>
