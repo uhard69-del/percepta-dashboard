@@ -29,8 +29,14 @@ export default function LoginPage() {
       if (res.ok) {
         const data = await res.json();
         localStorage.setItem("token", data.access_token);
+        localStorage.setItem("role", data.role || "user");
+        localStorage.setItem("username", username);
         
-        router.push("/dashboard");
+        if (data.role === "admin") {
+          router.push("/dashboard");
+        } else {
+          router.push("/store");
+        }
       } else {
          const errorData = await res.json();
          alert(errorData.detail || "Authentication Failed. Invalid Credentials.");

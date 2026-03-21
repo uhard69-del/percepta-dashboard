@@ -26,9 +26,16 @@ export default function DashboardPage() {
   const [showWebhook, setShowWebhook] = useState(false);
   const [newProjectName, setNewProjectName] = useState("");
   const [webhookUrl, setWebhookUrl] = useState("");
-  const username = "admin";
+  const [currentUser, setCurrentUser] = useState("admin");
 
   useEffect(() => {
+    const role = localStorage.getItem("role");
+    if (role !== "admin") {
+       window.location.href = "/store";
+       return;
+    }
+    setCurrentUser(localStorage.getItem("username") || "admin");
+    
     const fetchData = async () => {
       try {
         const [prodRes, licRes, logRes] = await Promise.all([
@@ -112,7 +119,7 @@ export default function DashboardPage() {
               <span className="text-[10px] font-black text-primary uppercase tracking-[0.3em]">Dashboard</span>
             </div>
             <h1 className="text-4xl font-black text-white tracking-tighter uppercase italic leading-none mb-2">
-              Welcome back, <span className="text-primary">{username}</span>
+              Welcome back, <span className="text-primary">{currentUser}</span>
             </h1>
             <p className="text-zinc-500 text-xs font-bold uppercase tracking-[0.2em]">Here&apos;s your overview for today</p>
           </div>
